@@ -60,6 +60,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useCollectionFilter } from '@/contexts/collection-filter-context'
 import { getAssetProfit } from '@/lib/asset-profit'
+import { getStaleProviderValueDate } from '@/lib/asset-provider-freshness'
 import { getAssetValuePrimary, getPortfolioShare, getPortfolioTotalPrimary } from '@/lib/asset-portfolio-share'
 import { formatTransactionTotal, getTransactionTotalCurrency } from '@/lib/asset-transaction-total'
 import { formatCurrency } from '@/lib/format'
@@ -771,6 +772,7 @@ export default function AssetsPage() {
       asset.current_value_primary == null
     const pctOfPortfolio = asset.sell_date ? null : getPortfolioShare(asset, portfolioTotalPrimary, userCurrency)
     const needsBuys = isMarketPriced && !hasCost && !asset.sell_date
+    const staleValueDate = isSynced ? getStaleProviderValueDate(asset, localDateString()) : null
 
     return (
       <div key={asset.id} className="border-b border-border last:border-b-0">
@@ -803,6 +805,16 @@ export default function AssetsPage() {
                   >
                     <AlertTriangle size={9} />
                     {t('assets.noFxRate')}
+                  </Badge>
+                )}
+                {staleValueDate && (
+                  <Badge
+                    variant="outline"
+                    className="text-[9px] px-1 py-0 text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/30 gap-0.5 shrink-0"
+                    title={t('assets.providerValueStaleTitle')}
+                  >
+                    <AlertTriangle size={9} />
+                    {t('assets.providerValueStale', { date: new Date(staleValueDate + 'T00:00:00').toLocaleDateString(dateLocale) })}
                   </Badge>
                 )}
                 {asset.sell_date && (

@@ -183,6 +183,8 @@ class HoldingData:
     # belongs in a 3-char ISO currency field.
     ticker: Optional[str] = None
     maturity_date: Optional[date] = None
+    # Date the provider says current_value is as of. None = not reported.
+    value_date: Optional[date] = None
     is_withdrawn: bool = False  # provider signaled the position was sold/transferred
     metadata: Optional[dict] = None
     # Owning-account hint (SimpleFIN — issue #345): holdings are reported per

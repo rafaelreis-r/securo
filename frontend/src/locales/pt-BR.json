@@ -2002,6 +2002,8 @@
     "noPriceWarning": "Adicionado sem preço de compra — adicione suas compras para acompanhar o preço médio e a rentabilidade.",
     "noFxRate": "sem cotação",
     "noFxRateTitle": "Não há cotação disponível para esta moeda. O ativo aparece na moeda original e fica de fora dos totais.",
+    "providerValueStale": "sem atualização desde {{date}}",
+    "providerValueStaleTitle": "O provedor ainda informa esta posição, mas não atualiza o valor desde esta data. Ela pode ter sido resgatada ou a conexão pode estar falhando ao atualizar investimentos. Confira com o seu banco.",
     "fxRateMissing": "Não há cotação disponível para {{currencies}}. Esses ativos aparecem na moeda original e ficam de fora dos totais.",
     "colAsset": "Ativo",
     "colQuantity": "Qtd.",

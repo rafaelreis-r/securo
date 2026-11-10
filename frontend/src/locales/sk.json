@@ -2122,6 +2122,8 @@
     "noPriceWarning": "Pridané bez nákupnej ceny — doplň nákupy, aby sa sledovala priemerná cena a výnos.",
     "noFxRate": "chýba kurz",
     "noFxRateTitle": "Pre túto menu nie je k dispozícii kurz. Aktívum sa zobrazuje v pôvodnej mene a je vynechané z celkov.",
+    "providerValueStale": "neaktualizované od {{date}}",
+    "providerValueStaleTitle": "Poskytovateľ túto pozíciu stále uvádza, ale od tohto dátumu neaktualizoval jej hodnotu. Mohla byť odkúpená alebo pripojenie neobnovuje investície. Overte to vo svojej banke.",
     "fxRateMissing": "Pre {{currencies}} nie je k dispozícii kurz. Tieto aktíva sa zobrazujú v pôvodnej mene a sú vynechané z celkov.",
     "colAsset": "Aktívum",
     "colQuantity": "Množ.",

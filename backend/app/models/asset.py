@@ -25,6 +25,12 @@ LOAN_COLLATERAL_TYPES = frozenset({"real_estate", "vehicle"})
 # (issue #622). Monetary amounts keep two.
 ASSET_PRICE_DECIMALS = 6
 
+# external_metadata key for the date a sync provider says a synced value is
+# as of. A provider can keep serving the last figure it read (a redeemed
+# position it never reports as closed), so the sync's own daily value row
+# says nothing about freshness; this date does.
+PROVIDER_VALUE_DATE_METADATA_KEY = "_securo_provider_value_date"
+
 class Asset(Base):
     __tablename__ = "assets"
     __table_args__ = (

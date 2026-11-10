@@ -920,3 +920,15 @@ def test_holding_active_status_is_never_withdrawn():
     ))
 
     assert holding.is_withdrawn is False
+
+
+def test_holding_carries_the_provider_value_date():
+    """Pluggy's `date` is the day the reported balance refers to. It is the
+    only signal that a position stopped updating, so it must survive mapping."""
+    from app.providers.pluggy import _build_holding_data
+
+    inv = _investment(balance=1000)
+    inv["date"] = "2026-03-17T00:00:00.000Z"
+
+    assert _build_holding_data(inv).value_date == date(2026, 3, 17)
+    assert _build_holding_data(_investment(balance=1000)).value_date is None

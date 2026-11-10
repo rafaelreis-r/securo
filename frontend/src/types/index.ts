@@ -988,6 +988,8 @@ export interface Asset {
   last_price: number | null
   last_price_at: string | null
   logo_url: string | null
+  // Date the sync provider says current_value is as of (YYYY-MM-DD).
+  provider_value_date: string | null
   // Ledger-derived (issue #235): weighted-average cost per unit (preço médio),
   // cost basis of held units, cumulative realized gain, and whether the holding
   // is driven by the transactions ledger.
