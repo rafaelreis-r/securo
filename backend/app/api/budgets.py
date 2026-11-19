@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.app_clock import app_today
 from app.core.database import get_async_session
 from app.core.workspace_context import (
     WorkspaceContext,
@@ -22,7 +23,8 @@ from app.schemas.budget import (
     BudgetUpdate,
     BudgetVsActual,
 )
-from app.services import budget_service
+from app.schemas.plan import MonthPlan, YearGrid
+from app.services import budget_service, plan_service
 
 router = APIRouter(prefix="/api/budgets", tags=["budgets"])
 
@@ -73,6 +75,28 @@ async def budget_suggestions(
 ):
     return await budget_service.get_budget_suggestions(
         session, ctx.workspace.id, ctx.user_id, month, months
+    )
+
+
+# Registered before the `/{budget_id}` routes so "plan" is never read as an id.
+@router.get("/plan/month", response_model=MonthPlan)
+async def month_plan(
+    month: Optional[date] = Query(None),
+    ctx: WorkspaceContext = Depends(current_workspace),
+    session: AsyncSession = Depends(get_async_session),
+):
+    target = (month or app_today()).replace(day=1)
+    return await plan_service.get_month_plan(session, ctx.workspace.id, ctx.user_id, target)
+
+
+@router.get("/plan/year", response_model=YearGrid)
+async def year_plan(
+    year: Optional[int] = Query(None, ge=1900, le=9999),
+    ctx: WorkspaceContext = Depends(current_workspace),
+    session: AsyncSession = Depends(get_async_session),
+):
+    return await plan_service.get_year_grid(
+        session, ctx.workspace.id, ctx.user_id, year or app_today().year
     )
 
 
