@@ -1017,6 +1017,12 @@
     "flagNotePlaceholder": "bijv. wacht op terugbetaling",
     "bulkFlagSuccess": "Transacties gemarkeerd: {{count}}",
     "bulkUnflagSuccess": "Markeringen verwijderd: {{count}}",
+    "excludeAction": "Uitsluiten van totalen",
+    "includeAction": "Weer meetellen",
+    "bulkExcludeSuccess": "Uitgesloten van inkomsten en uitgaven: {{count}}",
+    "bulkIncludeSuccess": "Weer meegeteld: {{count}}",
+    "bulkExcludeSkippedPaired": "Overboekingen ongewijzigd: {{count}}",
+    "bulkExcludeSkippedPrincipal": "Aflossingen ongewijzigd: {{count}}",
     "flagOverdueCount": "Verlopen markeringen: {{count}}",
     "flagPreset": {
       "tomorrow": "Morgen",

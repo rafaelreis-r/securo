@@ -1019,6 +1019,12 @@
     "flagNotePlaceholder": "p. ej.: esperando el reembolso",
     "bulkFlagSuccess": "Transacciones marcadas: {{count}}",
     "bulkUnflagSuccess": "Marcas eliminadas: {{count}}",
+    "excludeAction": "Excluir de los totales",
+    "includeAction": "Volver a contar",
+    "bulkExcludeSuccess": "Excluidas de ingresos y gastos: {{count}}",
+    "bulkIncludeSuccess": "Vuelven a contar: {{count}}",
+    "bulkExcludeSkippedPaired": "Transferencias sin cambios: {{count}}",
+    "bulkExcludeSkippedPrincipal": "Amortizaciones de préstamo sin cambios: {{count}}",
     "flagOverdueCount": "Marcas vencidas: {{count}}",
     "flagPreset": {
       "tomorrow": "Mañana",

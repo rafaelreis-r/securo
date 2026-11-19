@@ -1025,6 +1025,12 @@
     "flagNotePlaceholder": "наприклад, чекаю на повернення коштів",
     "bulkFlagSuccess": "Позначено транзакцій: {{count}}",
     "bulkUnflagSuccess": "Знято позначок: {{count}}",
+    "excludeAction": "Виключити з підсумків",
+    "includeAction": "Знову враховувати",
+    "bulkExcludeSuccess": "Виключено з доходів і витрат: {{count}}",
+    "bulkIncludeSuccess": "Знову враховується: {{count}}",
+    "bulkExcludeSkippedPaired": "Перекази без змін: {{count}}",
+    "bulkExcludeSkippedPrincipal": "Погашення основного боргу без змін: {{count}}",
     "flagOverdueCount": "Прострочених позначок: {{count}}",
     "flagPreset": {
       "tomorrow": "Завтра",

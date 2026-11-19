@@ -47,7 +47,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AlertTriangle, ArrowLeftRight, ArrowUp, ArrowDown, Check, Clock, HelpCircle, Info, Paperclip, Repeat, TagIcon, Trash2, Users, X, EyeClosed, ChartNoAxesColumn, Flag, SlidersHorizontal, Receipt } from 'lucide-react'
+import { AlertTriangle, ArrowLeftRight, ArrowUp, ArrowDown, Check, Clock, HelpCircle, Info, Paperclip, Repeat, TagIcon, Trash2, Users, X, EyeClosed, ChartColumn, ChartNoAxesColumn, Flag, SlidersHorizontal, Receipt } from 'lucide-react'
 import type { Transaction, Rule, InstallmentSeriesInput, TransactionApplyScope, TransactionEditPayload, ReconciliationSuggestion } from '@/types'
 import { RuleDialog, type RuleDialogInitialData } from '@/components/rule-dialog'
 import { TransactionFlagMarker } from '@/components/transaction-flag-marker'
@@ -675,6 +675,28 @@ export default function TransactionsPage() {
       invalidateAfterTxMutation()
       setSelectedIds(new Set())
       toast.success(t(isFlagged ? 'transactions.bulkFlagSuccess' : 'transactions.bulkUnflagSuccess', { count: result.updated }))
+    },
+    onError: (error) => {
+      toast.error(extractApiError(error))
+    },
+  })
+
+  const bulkExcludeMutation = useMutation({
+    mutationFn: ({ ids, excluded }: { ids: string[]; excluded: boolean }) =>
+      transactions.bulkExclude(ids, excluded),
+    onSuccess: (result, { excluded }) => {
+      invalidateAfterTxMutation()
+      setSelectedIds(new Set())
+      // Transfers and loan principal entries are never income or expense
+      // here, so the server leaves them alone; say how many.
+      const skipped = [
+        result.skipped_paired > 0 ? t('transactions.bulkExcludeSkippedPaired', { count: result.skipped_paired }) : null,
+        result.skipped_principal > 0 ? t('transactions.bulkExcludeSkippedPrincipal', { count: result.skipped_principal }) : null,
+      ].filter(Boolean).join(' · ')
+      toast.success(
+        t(excluded ? 'transactions.bulkExcludeSuccess' : 'transactions.bulkIncludeSuccess', { count: result.updated }),
+        { description: skipped || undefined },
+      )
     },
     onError: (error) => {
       toast.error(extractApiError(error))
@@ -1522,6 +1544,12 @@ export default function TransactionsPage() {
     if (selectedIds.size === 0) return
     bulkFlagMutation.mutate({ ids: Array.from(selectedIds), isFlagged: !selectionAllFlagged })
   }
+  // Sets the value on the whole selection, never toggles row by row.
+  const selectionAllExcluded = selectedRows.length > 0 && selectedRows.every(tx => tx.exclude_from_pnl)
+  const setExcludedOnSelection = (excluded: boolean) => {
+    if (selectedIds.size === 0) return
+    bulkExcludeMutation.mutate({ ids: Array.from(selectedIds), excluded })
+  }
   const exportLabel = exporting
     ? t('transactions.exporting')
     : selectedIds.size > 0
@@ -1873,6 +1901,22 @@ export default function TransactionsPage() {
                         {selectionAllFlagged ? t('transactions.unflagAction') : t('transactions.flagAction')}
                       </ContextMenuItem>
 
+                      <ContextMenuItem
+                        disabled={bulkExcludeMutation.isPending}
+                        onSelect={() => setExcludedOnSelection(true)}
+                      >
+                        <ChartNoAxesColumn className="me-2 h-4 w-4" />
+                        {t('transactions.excludeAction')}
+                      </ContextMenuItem>
+
+                      <ContextMenuItem
+                        disabled={bulkExcludeMutation.isPending}
+                        onSelect={() => setExcludedOnSelection(false)}
+                      >
+                        <ChartColumn className="me-2 h-4 w-4" />
+                        {t('transactions.includeAction')}
+                      </ContextMenuItem>
+
                       <ContextMenuItem onSelect={handleFocusTagInput}>
                         <TagIcon className="me-2 h-4 w-4" />
                         {t('transactions.bulkAddTags')}
@@ -2092,6 +2136,8 @@ export default function TransactionsPage() {
               allFlagged={selectionAllFlagged}
               flagPending={bulkFlagMutation.isPending}
               onToggleFlag={toggleFlagOnSelection}
+              excludePending={bulkExcludeMutation.isPending}
+              onSetExcluded={setExcludedOnSelection}
               onOpenTransfer={() => setLinkTransferDialogOpen(true)}
               onCreateRule={selectedSingleTx && !selectedSingleTx.is_shared
                 ? () => handleCreateRuleFromTransaction(selectedSingleTx)
@@ -2184,6 +2230,25 @@ export default function TransactionsPage() {
               <Flag size={15} className={cn('2xl:me-1.5', selectionAllFlagged && 'fill-current text-amber-600 dark:text-amber-400')} />
               <span className="hidden 2xl:inline">
                 {selectionAllFlagged ? t('transactions.unflagAction') : t('transactions.flagAction')}
+              </span>
+            </Button>
+
+            {/* Counts again when every selected row is already out of the
+                totals, and takes the whole selection out otherwise. */}
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={bulkExcludeMutation.isPending}
+              onClick={() => setExcludedOnSelection(!selectionAllExcluded)}
+              title={selectionAllExcluded ? t('transactions.includeAction') : t('transactions.excludeAction')}
+              aria-label={selectionAllExcluded ? t('transactions.includeAction') : t('transactions.excludeAction')}
+              className="h-8 px-3 shrink-0 text-sm"
+            >
+              {selectionAllExcluded
+                ? <ChartColumn size={15} className="2xl:me-1.5" />
+                : <ChartNoAxesColumn size={15} className="2xl:me-1.5" />}
+              <span className="hidden 2xl:inline">
+                {selectionAllExcluded ? t('transactions.includeAction') : t('transactions.excludeAction')}
               </span>
             </Button>
 

@@ -1053,6 +1053,12 @@
     "flagNotePlaceholder": "např. čekám na vrácení peněz",
     "bulkFlagSuccess": "Označené transakce: {{count}}",
     "bulkUnflagSuccess": "Odebraná označení: {{count}}",
+    "excludeAction": "Vyloučit ze součtů",
+    "includeAction": "Znovu započítat",
+    "bulkExcludeSuccess": "Vyloučeno z příjmů a výdajů: {{count}}",
+    "bulkIncludeSuccess": "Znovu započítáno: {{count}}",
+    "bulkExcludeSkippedPaired": "Převody beze změny: {{count}}",
+    "bulkExcludeSkippedPrincipal": "Splátky jistiny beze změny: {{count}}",
     "flagOverdueCount": "Označení po termínu: {{count}}",
     "flagPreset": {
       "tomorrow": "Zítra",

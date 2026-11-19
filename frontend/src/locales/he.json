@@ -1029,6 +1029,12 @@
     "flagNotePlaceholder": "למשל: מחכה להחזר",
     "bulkFlagSuccess": "עסקאות שסומנו: {{count}}",
     "bulkUnflagSuccess": "סימונים שהוסרו: {{count}}",
+    "excludeAction": "החרגה מהסיכומים",
+    "includeAction": "לספור שוב",
+    "bulkExcludeSuccess": "הוחרגו מהכנסות והוצאות: {{count}}",
+    "bulkIncludeSuccess": "נספרות שוב: {{count}}",
+    "bulkExcludeSkippedPaired": "העברות ללא שינוי: {{count}}",
+    "bulkExcludeSkippedPrincipal": "החזרי קרן הלוואה ללא שינוי: {{count}}",
     "flagOverdueCount": "סימונים באיחור: {{count}}",
     "flagPreset": {
       "tomorrow": "מחר",

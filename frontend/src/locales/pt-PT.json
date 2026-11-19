@@ -1019,6 +1019,12 @@
     "flagNotePlaceholder": "ex.: à espera do reembolso",
     "bulkFlagSuccess": "Transações assinaladas: {{count}}",
     "bulkUnflagSuccess": "Sinalizações removidas: {{count}}",
+    "excludeAction": "Desconsiderar",
+    "includeAction": "Voltar a considerar",
+    "bulkExcludeSuccess": "Desconsideradas: {{count}}",
+    "bulkIncludeSuccess": "Voltaram a ser consideradas: {{count}}",
+    "bulkExcludeSkippedPaired": "Transferências não alteradas: {{count}}",
+    "bulkExcludeSkippedPrincipal": "Amortizações de empréstimo não alteradas: {{count}}",
     "flagOverdueCount": "Sinalizações em atraso: {{count}}",
     "flagPreset": {
       "tomorrow": "Amanhã",

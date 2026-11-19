@@ -1019,6 +1019,12 @@
     "flagNotePlaceholder": "es. in attesa del rimborso",
     "bulkFlagSuccess": "Transazioni contrassegnate: {{count}}",
     "bulkUnflagSuccess": "Contrassegni rimossi: {{count}}",
+    "excludeAction": "Escludi dai totali",
+    "includeAction": "Conta di nuovo",
+    "bulkExcludeSuccess": "Escluse da entrate e uscite: {{count}}",
+    "bulkIncludeSuccess": "Di nuovo conteggiate: {{count}}",
+    "bulkExcludeSkippedPaired": "Trasferimenti invariati: {{count}}",
+    "bulkExcludeSkippedPrincipal": "Quote capitale del prestito invariate: {{count}}",
     "flagOverdueCount": "Contrassegni scaduti: {{count}}",
     "flagPreset": {
       "tomorrow": "Domani",

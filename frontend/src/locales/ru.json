@@ -1025,6 +1025,12 @@
     "flagNotePlaceholder": "например, жду возврат",
     "bulkFlagSuccess": "Отмечено транзакций: {{count}}",
     "bulkUnflagSuccess": "Снято отметок: {{count}}",
+    "excludeAction": "Исключить из итогов",
+    "includeAction": "Снова учитывать",
+    "bulkExcludeSuccess": "Исключено из доходов и расходов: {{count}}",
+    "bulkIncludeSuccess": "Снова учитывается: {{count}}",
+    "bulkExcludeSkippedPaired": "Переводы без изменений: {{count}}",
+    "bulkExcludeSkippedPrincipal": "Погашения основного долга без изменений: {{count}}",
     "flagOverdueCount": "Просроченных отметок: {{count}}",
     "flagPreset": {
       "tomorrow": "Завтра",

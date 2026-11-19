@@ -1,5 +1,5 @@
 import type { Category, CategoryGroup } from '@/types'
-import { ArrowLeftRight, Check, Flag, MoreHorizontal, SlidersHorizontal, Trash2, Users, X } from 'lucide-react'
+import { ArrowLeftRight, ChartColumn, ChartNoAxesColumn, Check, Flag, MoreHorizontal, SlidersHorizontal, Trash2, Users, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CategorySelect } from '@/components/category-select'
 import { Button } from '@/components/ui/button'
@@ -28,6 +28,9 @@ export type MobileBulkSelectionActionsProps = {
   allFlagged: boolean
   flagPending: boolean
   onToggleFlag: () => void
+  excludePending: boolean
+  // Takes the selection out of income and expense totals, or brings it back.
+  onSetExcluded: (excluded: boolean) => void
   onOpenTransfer: () => void
   onCreateRule?: () => void
   onBulkDelete: () => void
@@ -105,6 +108,12 @@ function BulkActionItems(props: MobileBulkSelectionActionsProps) {
       </DropdownMenuItem>
       <DropdownMenuItem disabled={props.flagPending} onSelect={props.onToggleFlag}>
         <Flag size={15} />{props.allFlagged ? t('transactions.unflagAction') : t('transactions.flagAction')}
+      </DropdownMenuItem>
+      <DropdownMenuItem disabled={props.excludePending} onSelect={() => props.onSetExcluded(true)}>
+        <ChartNoAxesColumn size={15} />{t('transactions.excludeAction')}
+      </DropdownMenuItem>
+      <DropdownMenuItem disabled={props.excludePending} onSelect={() => props.onSetExcluded(false)}>
+        <ChartColumn size={15} />{t('transactions.includeAction')}
       </DropdownMenuItem>
       <DropdownMenuItem disabled={props.transferDisabled} title={props.transferTitle} onSelect={props.onOpenTransfer}>
         <ArrowLeftRight size={15} />{t('transactions.linkAsTransfer')}

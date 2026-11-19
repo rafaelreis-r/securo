@@ -19,7 +19,7 @@ from app.core.workspace_context import (
 )
 from app.models.account import Account
 from app.models.transaction import Transaction
-from app.schemas.transaction import BulkAddToGroupRequest, BulkCategorizeRequest, DescriptionSuggestion, BulkFlagRequest, BulkTagsRequest, CreateCounterpartRequest, FlaggedSummary, InstallmentSeriesCreate, LinkTransferRequest, TransactionBulkDeleteRequest, TransactionCreate, TransactionRead, TransactionTransferCounterpart, TransactionUpdate, TransferCreate, TransferRead
+from app.schemas.transaction import BulkAddToGroupRequest, BulkCategorizeRequest, BulkExcludeRequest, BulkExcludeResult, DescriptionSuggestion, BulkFlagRequest, BulkTagsRequest, CreateCounterpartRequest, FlaggedSummary, InstallmentSeriesCreate, LinkTransferRequest, TransactionBulkDeleteRequest, TransactionCreate, TransactionRead, TransactionTransferCounterpart, TransactionUpdate, TransferCreate, TransferRead
 from app.schemas.transaction_calendar import TransactionCalendarResponse
 from app.services import transaction_service
 from app.services.transaction_service import FlagDue
@@ -411,6 +411,17 @@ async def bulk_flag(
         session, ctx.workspace.id, data.transaction_ids, data.is_flagged, data.flag_due_date
     )
     return {"updated": count}
+
+
+@router.patch("/bulk-exclude", response_model=BulkExcludeResult)
+async def bulk_exclude(
+    data: BulkExcludeRequest,
+    ctx: WorkspaceContext = Depends(current_writable_workspace),
+    session: AsyncSession = Depends(get_async_session),
+):
+    return await transaction_service.bulk_set_exclude_from_pnl(
+        session, ctx.workspace.id, data.transaction_ids, data.excluded
+    )
 
 
 @router.patch("/bulk-remove-tags")
