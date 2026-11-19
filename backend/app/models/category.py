@@ -1,3 +1,4 @@
+import enum
 import uuid
 from typing import TYPE_CHECKING, Optional
 
@@ -11,6 +12,22 @@ from app.models.plugin_origin import PluginOrigin
 if TYPE_CHECKING:
     from app.models.category_group import CategoryGroup
     from app.models.user import User
+
+
+class CategoryKind(str, enum.Enum):
+    """What a category means for the plan (metas). One per category.
+
+    The rules each kind follows (which plan block it lands in, how its
+    actual is signed, whether it is transfer-like) live in
+    `app.services.category_kind_rules.KIND_RULES`, the single source.
+    """
+
+    INCOME = "income"
+    INVESTMENT = "investment"
+    FIXED = "fixed"
+    VARIABLE = "variable"
+    OCCASIONAL = "occasional"
+    TRANSFER = "transfer"
 
 
 class Category(Base, PluginOrigin):
@@ -35,6 +52,12 @@ class Category(Base, PluginOrigin):
     # transfers (transfer_pair_id IS NOT NULL), but category-based so we
     # can catch one-sided movements like an investment application where
     # the counterpart lives in Assets, not Accounts.
+    # Nature of the category for the plan. `treat_as_transfer` must agree
+    # with KIND_RULES[kind].transfer_like; category_service is the only
+    # writer that keeps the two in step.
+    kind: Mapped[str] = mapped_column(
+        String(20), default=CategoryKind.VARIABLE.value, server_default=CategoryKind.VARIABLE.value
+    )
     treat_as_transfer: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     # Flag to exclude transactions in this category from reports and dashboard aggregations.
