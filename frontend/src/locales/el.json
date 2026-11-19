@@ -1301,6 +1301,12 @@
     "flagNotePlaceholder": "π.χ. αναμονή επιστροφής χρημάτων",
     "bulkFlagSuccess": "Σημαδεμένες συναλλαγές: {{count}}",
     "bulkUnflagSuccess": "Σημάδια που αφαιρέθηκαν: {{count}}",
+    "excludeAction": "Εξαίρεση από τα σύνολα",
+    "includeAction": "Να μετράει ξανά",
+    "bulkExcludeSuccess": "Εξαιρέθηκαν από έσοδα και έξοδα: {{count}}",
+    "bulkIncludeSuccess": "Μετρούν ξανά: {{count}}",
+    "bulkExcludeSkippedPaired": "Μεταφορές χωρίς αλλαγή: {{count}}",
+    "bulkExcludeSkippedPrincipal": "Αποπληρωμές κεφαλαίου δανείου χωρίς αλλαγή: {{count}}",
     "flagOverdueCount": "Ληξιπρόθεσμα σημάδια: {{count}}",
     "flagPreset": {
       "tomorrow": "Αύριο",

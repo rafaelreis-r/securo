@@ -1017,6 +1017,12 @@
     "flagNotePlaceholder": "e.g. waiting for the refund",
     "bulkFlagSuccess": "Transactions flagged: {{count}}",
     "bulkUnflagSuccess": "Flags removed: {{count}}",
+    "excludeAction": "Exclude from totals",
+    "includeAction": "Count again",
+    "bulkExcludeSuccess": "Excluded from income and expenses: {{count}}",
+    "bulkIncludeSuccess": "Counted again: {{count}}",
+    "bulkExcludeSkippedPaired": "Transfers left unchanged: {{count}}",
+    "bulkExcludeSkippedPrincipal": "Loan principal entries left unchanged: {{count}}",
     "flagOverdueCount": "Overdue flags: {{count}}",
     "flagPreset": {
       "tomorrow": "Tomorrow",

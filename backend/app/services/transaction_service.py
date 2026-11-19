@@ -2491,6 +2491,57 @@ async def bulk_set_flag(
     return result.rowcount or 0
 
 
+async def bulk_set_exclude_from_pnl(
+    session: AsyncSession,
+    workspace_id: uuid.UUID,
+    transaction_ids: list[uuid.UUID],
+    excluded: bool,
+) -> dict[str, int]:
+    """Take rows of this workspace out of income and expense totals, or put
+    them back. The balance keeps them either way, and `is_ignored` is left
+    alone. Sets the value rather than toggling it, so a repeat is a no-op.
+
+    Mortgage principal entries are skipped: their P&L flag is owned by the
+    payment breakdown, the same rule `update_transaction` applies. Transfer
+    pairs are skipped too, since a transfer is never income or expense."""
+    if not transaction_ids:
+        return {"updated": 0, "skipped_principal": 0, "skipped_paired": 0}
+    in_scope = (
+        Transaction.id.in_(transaction_ids),
+        Transaction.workspace_id == workspace_id,
+    )
+    is_principal = Transaction.source == MORTGAGE_PRINCIPAL_SOURCE
+    is_paired = Transaction.transfer_pair_id.is_not(None)
+    skipped_principal, skipped_paired = (
+        await session.execute(
+            select(
+                func.count().filter(is_principal),
+                func.count().filter(~is_principal, is_paired),
+            ).where(*in_scope)
+        )
+    ).one()
+    result = cast(
+        CursorResult,
+        await session.execute(
+            update(Transaction)
+            .where(
+                *in_scope,
+                ~is_principal,
+                ~is_paired,
+                Transaction.exclude_from_pnl.is_not(excluded),
+            )
+            .values(exclude_from_pnl=excluded)
+            .execution_options(synchronize_session=False)
+        ),
+    )
+    await session.commit()
+    return {
+        "updated": result.rowcount or 0,
+        "skipped_principal": int(skipped_principal or 0),
+        "skipped_paired": int(skipped_paired or 0),
+    }
+
+
 async def bulk_remove_tags(
     session: AsyncSession,
     workspace_id: uuid.UUID,

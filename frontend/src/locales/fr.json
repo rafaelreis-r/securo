@@ -1019,6 +1019,12 @@
     "flagNotePlaceholder": "ex. : en attente du remboursement",
     "bulkFlagSuccess": "Transactions signalées : {{count}}",
     "bulkUnflagSuccess": "Signalements retirés : {{count}}",
+    "excludeAction": "Exclure des totaux",
+    "includeAction": "Compter à nouveau",
+    "bulkExcludeSuccess": "Exclues des revenus et dépenses : {{count}}",
+    "bulkIncludeSuccess": "Comptées à nouveau : {{count}}",
+    "bulkExcludeSkippedPaired": "Virements inchangés : {{count}}",
+    "bulkExcludeSkippedPrincipal": "Remboursements de capital inchangés : {{count}}",
     "flagOverdueCount": "Signalements en retard : {{count}}",
     "flagPreset": {
       "tomorrow": "Demain",

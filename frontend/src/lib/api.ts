@@ -763,6 +763,18 @@ export const transactions = {
     })
     return data
   },
+  // Takes rows out of income and expense totals (or brings them back); the
+  // balance keeps them. Transfers and loan principal entries are skipped.
+  bulkExclude: async (
+    transactionIds: string[],
+    excluded: boolean,
+  ): Promise<{ updated: number; skipped_principal: number; skipped_paired: number }> => {
+    const { data } = await api.patch('/transactions/bulk-exclude', {
+      transaction_ids: transactionIds,
+      excluded,
+    })
+    return data
+  },
   flaggedSummary: async (): Promise<FlaggedSummary> => {
     const { data } = await api.get('/transactions/flagged-summary')
     return data

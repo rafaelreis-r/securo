@@ -1017,6 +1017,12 @@
     "flagNotePlaceholder": "जैसे: रिफ़ंड का इंतज़ार",
     "bulkFlagSuccess": "चिह्नित लेनदेन: {{count}}",
     "bulkUnflagSuccess": "हटाए गए चिह्न: {{count}}",
+    "excludeAction": "कुल से बाहर रखें",
+    "includeAction": "फिर से गिनें",
+    "bulkExcludeSuccess": "आय और व्यय से बाहर: {{count}}",
+    "bulkIncludeSuccess": "फिर से गिने गए: {{count}}",
+    "bulkExcludeSkippedPaired": "ट्रांसफ़र जैसे थे वैसे रहे: {{count}}",
+    "bulkExcludeSkippedPrincipal": "ऋण मूलधन प्रविष्टियाँ जैसी थीं वैसी रहीं: {{count}}",
     "flagOverdueCount": "समय निकले चिह्न: {{count}}",
     "flagPreset": {
       "tomorrow": "कल",

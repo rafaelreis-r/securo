@@ -1017,6 +1017,12 @@
     "flagNotePlaceholder": "例: 返金待ち",
     "bulkFlagSuccess": "フラグを付けた取引: {{count}}",
     "bulkUnflagSuccess": "外したフラグ: {{count}}",
+    "excludeAction": "合計から除外",
+    "includeAction": "再び集計に含める",
+    "bulkExcludeSuccess": "収入・支出から除外: {{count}}",
+    "bulkIncludeSuccess": "再び集計に含めた取引: {{count}}",
+    "bulkExcludeSkippedPaired": "変更しなかった振替: {{count}}",
+    "bulkExcludeSkippedPrincipal": "変更しなかったローン元本返済: {{count}}",
     "flagOverdueCount": "期限切れのフラグ: {{count}}",
     "flagPreset": {
       "tomorrow": "明日",

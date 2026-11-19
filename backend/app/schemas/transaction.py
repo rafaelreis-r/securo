@@ -351,6 +351,20 @@ class BulkFlagRequest(BaseModel):
     flag_due_date: Optional[_Date] = None
 
 
+class BulkExcludeRequest(BaseModel):
+    """Take several rows out of income and expense totals (`excluded=True`)
+    or bring them back. Balances keep the rows either way."""
+
+    transaction_ids: list[uuid.UUID] = Field(min_length=1, max_length=1000)
+    excluded: bool
+
+
+class BulkExcludeResult(BaseModel):
+    updated: int
+    skipped_principal: int
+    skipped_paired: int
+
+
 class FlaggedSummary(BaseModel):
     """How many flagged rows a workspace has, and how many are past their date."""
 

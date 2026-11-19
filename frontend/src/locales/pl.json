@@ -1034,6 +1034,12 @@
     "flagNotePlaceholder": "np. czekam na zwrot",
     "bulkFlagSuccess": "Oznaczone transakcje: {{count}}",
     "bulkUnflagSuccess": "Usunięte oznaczenia: {{count}}",
+    "excludeAction": "Wyklucz z sum",
+    "includeAction": "Licz ponownie",
+    "bulkExcludeSuccess": "Wykluczone z przychodów i wydatków: {{count}}",
+    "bulkIncludeSuccess": "Ponownie liczone: {{count}}",
+    "bulkExcludeSkippedPaired": "Przelewy bez zmian: {{count}}",
+    "bulkExcludeSkippedPrincipal": "Spłaty kapitału bez zmian: {{count}}",
     "flagOverdueCount": "Zaległe oznaczenia: {{count}}",
     "flagPreset": {
       "tomorrow": "Jutro",

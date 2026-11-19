@@ -1017,6 +1017,12 @@
     "flagNotePlaceholder": "z. B. Warte auf Erstattung",
     "bulkFlagSuccess": "Markierte Transaktionen: {{count}}",
     "bulkUnflagSuccess": "Markierungen entfernt: {{count}}",
+    "excludeAction": "Aus Summen ausschließen",
+    "includeAction": "Wieder einrechnen",
+    "bulkExcludeSuccess": "Aus Einnahmen und Ausgaben ausgeschlossen: {{count}}",
+    "bulkIncludeSuccess": "Wieder eingerechnet: {{count}}",
+    "bulkExcludeSkippedPaired": "Umbuchungen unverändert: {{count}}",
+    "bulkExcludeSkippedPrincipal": "Tilgungsbuchungen unverändert: {{count}}",
     "flagOverdueCount": "Überfällige Markierungen: {{count}}",
     "flagPreset": {
       "tomorrow": "Morgen",

@@ -1017,6 +1017,12 @@
     "flagNotePlaceholder": "pl. a visszatérítésre várok",
     "bulkFlagSuccess": "Megjelölt tranzakciók: {{count}}",
     "bulkUnflagSuccess": "Eltávolított jelölések: {{count}}",
+    "excludeAction": "Kizárás az összesítésből",
+    "includeAction": "Újra beszámítás",
+    "bulkExcludeSuccess": "Kizárva a bevételekből és kiadásokból: {{count}}",
+    "bulkIncludeSuccess": "Újra beszámítva: {{count}}",
+    "bulkExcludeSkippedPaired": "Változatlan átvezetések: {{count}}",
+    "bulkExcludeSkippedPrincipal": "Változatlan tőketörlesztések: {{count}}",
     "flagOverdueCount": "Lejárt jelölések: {{count}}",
     "flagPreset": {
       "tomorrow": "Holnap",
