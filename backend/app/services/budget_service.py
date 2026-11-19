@@ -3,7 +3,7 @@ from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 
-from sqlalchemy import select, func, and_, case
+from sqlalchemy import select, func, case
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,7 +37,24 @@ from app.services.dashboard_service import (
     _get_recurring_projections,
 )
 from app.services.fx_rate_service import convert
+from app.services.plan_service import resolve_effective_budgets
 from app.core.config import get_settings
+
+
+async def _effective_budgets(
+    session: AsyncSession, workspace_id: uuid.UUID, month_start: date
+) -> list[Budget]:
+    """The Budget rows in effect for the month, resolved by
+    `plan_service.resolve_effective_budgets` (month override > most recent
+    recurring default with month <= M)."""
+    result = await session.execute(
+        select(Budget).where(
+            Budget.workspace_id == workspace_id,
+            Budget.month <= month_start,
+        )
+    )
+    resolved = resolve_effective_budgets(result.scalars().all(), month_start)
+    return [b for rows in resolved.values() for b in rows]
 
 
 async def _build_budget_map(
@@ -48,53 +65,13 @@ async def _build_budget_map(
     Resolution order:
     1. Month-specific override (is_recurring=false, month=M) takes priority
     2. Most recent recurring default (is_recurring=true, month<=M) as fallback
+    Rows of the same slot by different authors add up.
     """
     budget_map: dict[str, tuple[Decimal, bool]] = {}
-
-    # Query 1: Get effective recurring defaults (most recent per category where month <= M)
-    # Use a subquery to get the max month per category for recurring budgets
-    max_month_subq = (
-        select(
-            Budget.category_id,
-            func.max(Budget.month).label("max_month"),
-        )
-        .where(
-            Budget.workspace_id == workspace_id,
-            Budget.is_recurring == True,  # noqa: E712
-            Budget.month <= month_start,
-        )
-        .group_by(Budget.category_id)
-        .subquery()
-    )
-
-    recurring_result = await session.execute(
-        select(Budget)
-        .join(
-            max_month_subq,
-            and_(
-                Budget.category_id == max_month_subq.c.category_id,
-                Budget.month == max_month_subq.c.max_month,
-            ),
-        )
-        .where(
-            Budget.workspace_id == workspace_id,
-            Budget.is_recurring == True,  # noqa: E712
-        )
-    )
-    for b in recurring_result.scalars().all():
-        budget_map[str(b.category_id)] = (b.amount, True)
-
-    # Query 2: Month-specific overrides (take priority over recurring)
-    overrides_result = await session.execute(
-        select(Budget).where(
-            Budget.workspace_id == workspace_id,
-            Budget.is_recurring == False,  # noqa: E712
-            Budget.month == month_start,
-        )
-    )
-    for b in overrides_result.scalars().all():
-        budget_map[str(b.category_id)] = (b.amount, False)
-
+    for b in await _effective_budgets(session, workspace_id, month_start):
+        key = str(b.category_id)
+        amount = budget_map[key][0] + b.amount if key in budget_map else b.amount
+        budget_map[key] = (amount, b.is_recurring)
     return budget_map
 
 
@@ -106,54 +83,8 @@ async def get_budgets(
         result = await session.execute(query.order_by(Budget.month.desc()))
         return list(result.scalars().all())
 
-    month_start = month.replace(day=1)
-
-    # Get month-specific overrides
-    overrides_result = await session.execute(
-        select(Budget).where(
-            Budget.workspace_id == workspace_id,
-            Budget.is_recurring == False,  # noqa: E712
-            Budget.month == month_start,
-        )
-    )
-    overrides = list(overrides_result.scalars().all())
-    override_category_ids = {str(b.category_id) for b in overrides}
-
-    # Get effective recurring defaults for this month
-    max_month_subq = (
-        select(
-            Budget.category_id,
-            func.max(Budget.month).label("max_month"),
-        )
-        .where(
-            Budget.workspace_id == workspace_id,
-            Budget.is_recurring == True,  # noqa: E712
-            Budget.month <= month_start,
-        )
-        .group_by(Budget.category_id)
-        .subquery()
-    )
-
-    recurring_result = await session.execute(
-        select(Budget)
-        .join(
-            max_month_subq,
-            and_(
-                Budget.category_id == max_month_subq.c.category_id,
-                Budget.month == max_month_subq.c.max_month,
-            ),
-        )
-        .where(
-            Budget.workspace_id == workspace_id,
-            Budget.is_recurring == True,  # noqa: E712
-        )
-    )
-    recurring = [
-        b for b in recurring_result.scalars().all()
-        if str(b.category_id) not in override_category_ids
-    ]
-
-    return sorted(overrides + recurring, key=lambda b: b.month, reverse=True)
+    budgets = await _effective_budgets(session, workspace_id, month.replace(day=1))
+    return sorted(budgets, key=lambda b: b.month, reverse=True)
 
 
 async def get_budget(

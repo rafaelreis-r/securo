@@ -16,7 +16,7 @@ from sqlalchemy.orm import aliased
 from app.core.app_clock import app_today
 from app.core.shared_scope import in_bound_workspace, invited_group_member_ids
 from app.models.account import Account
-from app.models.category import Category
+from app.models.category import Category, CategoryKind
 from app.models.transaction import Transaction
 from app.models.transaction_category_line import TransactionCategoryLine
 
@@ -330,6 +330,36 @@ def counts_as_pnl(category_id):
     )
 
 
+def _investment_category_ids():
+    return select(Category.id).where(
+        Category.kind == CategoryKind.INVESTMENT.value,
+        Category.is_ignored.is_(False),
+    )
+
+
+def counts_as_investment(category_id):
+    """SQL filter: the row (or part) is money applied to an investment.
+
+    The plan's investment block, which `counts_as_user_pnl` can never feed:
+    an investment category is transfer-like (`KIND_RULES`), so it is out of
+    income and expense by design. Same exclusions the user controls
+    (`is_ignored` on the row or its category, `exclude_from_pnl`), but a
+    paired transfer still counts: moving money from checking to the broker
+    is exactly an application. Only its debit leg does, so the broker-side
+    credit of the same pair never shows up as a redemption. The plan counts
+    debits only (`ActualRule.DEBITS_ONLY`); unpaired credits pass so it can
+    report redemptions as counter flow.
+
+    `category_id` is `line_category_id()` after `with_category_lines`.
+    """
+    return and_(
+        category_id.in_(_investment_category_ids()),
+        Transaction.is_ignored.is_(False),
+        Transaction.exclude_from_pnl.is_(False),
+        or_(Transaction.transfer_pair_id.is_(None), Transaction.type == "debit"),
+    )
+
+
 def user_pnl_parts(tx: Transaction) -> list[tuple[Optional[uuid.UUID], Optional[Category], Decimal]]:
     """Python twin of `counts_as_user_pnl` for loops over loaded rows.
 
@@ -638,9 +668,11 @@ async def owner_split_offset_by_category(
     use_effective_date: bool = False,
     primary_currency: Optional[str] = None,
     workspace_id: Optional[uuid.UUID] = None,
+    tx_type: str = "debit",
 ) -> dict:
-    """Per-category, sum of non-owner shares on owner-side debit splits —
-    subtract from full owner debits to get the owner's category share.
+    """Per-category, sum of non-owner shares on owner-side splits of
+    `tx_type` (debits by default) — subtract from the owner's full totals
+    of that type to get the owner's category share.
     Currency handling as in :func:`owner_split_offset_pnl`."""
     rows = await _owner_split_rows(
         session,
@@ -649,7 +681,7 @@ async def owner_split_offset_by_category(
         month_end,
         use_effective_date,
         workspace_id,
-        extra_filters=(Transaction.type == "debit",),
+        extra_filters=(Transaction.type == tx_type,),
     )
     rates: dict[tuple[str, date], Optional[Decimal]] = {}
     totals: dict = {}
