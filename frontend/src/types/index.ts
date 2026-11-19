@@ -106,8 +106,6 @@ export interface Category {
   kind: CategoryKind
   treat_as_transfer: boolean
   is_ignored: boolean
-  /** What the category is in the plan (metas). Optional until every backend sends it. */
-  kind?: CategoryKind
 }
 
 /** Active rules that assign a category, used when retiring one. */
@@ -1288,9 +1286,6 @@ export interface BudgetSuggestionResponse {
   months_analyzed: number
   suggestions: BudgetSuggestion[]
 }
-
-/** Nature of a category in the plan (backend `CategoryKind`). */
-export type CategoryKind = 'income' | 'investment' | 'fixed' | 'variable' | 'occasional' | 'transfer'
 
 /** The four plan blocks, in display order (backend `PlanBlock`). */
 export type PlanBlock = 'income' | 'investment' | 'fixed_spending' | 'variable_spending'
