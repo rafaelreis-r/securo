@@ -102,6 +102,8 @@ export interface Category {
   is_hidden: boolean
   treat_as_transfer: boolean
   is_ignored: boolean
+  /** What the category is in the plan (metas). Optional until every backend sends it. */
+  kind?: CategoryKind
 }
 
 /** Active rules that assign a category, used when retiring one. */
@@ -1281,6 +1283,69 @@ export interface BudgetSuggestionResponse {
   months_requested: number
   months_analyzed: number
   suggestions: BudgetSuggestion[]
+}
+
+/** Nature of a category in the plan (backend `CategoryKind`). */
+export type CategoryKind = 'income' | 'investment' | 'fixed' | 'variable' | 'occasional' | 'transfer'
+
+/** The four plan blocks, in display order (backend `PlanBlock`). */
+export type PlanBlock = 'income' | 'investment' | 'fixed_spending' | 'variable_spending'
+
+/** Plan amounts as the UI uses them; the API sends decimals as strings. */
+export interface PlanLine {
+  category_id: string | null
+  name: string
+  icon: string | null
+  color: string | null
+  group_id: string | null
+  group_name: string | null
+  kind: CategoryKind | null
+  planned: number | null
+  actual: number
+  /** Movements against the kind's direction; non-zero means mixed flows. */
+  counter_flow: number
+  /** Actual over the month's actual income, as a ratio (0.1 = 10%). */
+  share_of_income: number | null
+}
+
+export interface PlanBlockSummary {
+  block: PlanBlock
+  planned: number | null
+  actual: number
+  /** Spending: passing the target is bad. Income/investment: falling short is. */
+  over_is_bad: boolean
+  share_of_income: number | null
+  lines: PlanLine[]
+}
+
+export interface MonthPlan {
+  month: string
+  /** Sum of the income targets; base for "% of income" targets. */
+  income_planned: number | null
+  blocks: PlanBlockSummary[]
+}
+
+export interface PlanGridCell {
+  month: string
+  planned: number | null
+  actual: number
+}
+
+export interface PlanGridRow {
+  level: 'block' | 'group' | 'category'
+  block: PlanBlock
+  group_id: string | null
+  group_name: string | null
+  category_id: string | null
+  name: string
+  kind: CategoryKind | null
+  cells: PlanGridCell[]
+  total: PlanGridCell
+}
+
+export interface YearGrid {
+  year: number
+  rows: PlanGridRow[]
 }
 
 export interface Asset {

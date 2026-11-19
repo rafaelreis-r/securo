@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/page-header'
 import { BudgetSpendingProgress } from '@/components/budget-spending-progress'
 import { BudgetCopyDialog } from '@/components/budget-copy-dialog'
+import { IncomePercentHelper } from '@/components/plan/income-percent-helper'
 import { TransactionDrillDown } from '@/components/transaction-drill-down'
 import { CategoryIcon } from '@/components/category-icon'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
@@ -152,6 +153,13 @@ export default function BudgetsPage() {
     queryKey: ['budgets', 'suggestions', monthParam, suggestMonths],
     queryFn: () => budgetsApi.suggestions(monthParam, suggestMonths),
   })
+  // The month's planned income, base of the "% da renda" helper.
+  const { data: monthPlan } = useQuery({
+    queryKey: ['budgets', 'plan', 'month', selectedMonth],
+    queryFn: () => budgetsApi.planMonth(monthParam),
+    enabled: canWrite,
+  })
+  const incomePlanned = monthPlan?.income_planned ?? null
   const historyMonthKeys = useMemo(
     () => Array.from({ length: HISTORY_MONTHS }, (_, index) => shiftMonth(selectedMonth, -(index + 1))),
     [selectedMonth],
@@ -184,9 +192,10 @@ export default function BudgetsPage() {
     })
   }
   // Include hidden categories/groups because existing budgets still count in reports.
-  // Transfers and ignored categories never get a budget.
+  // Transfers (other than investments) and ignored categories never get a budget.
   const sections = useMemo(() => {
-    const budgetable = (category: Category) => !category.treat_as_transfer && !category.is_ignored
+    // Investment categories move money like transfers but carry the plan's investment target.
+    const budgetable = (category: Category) => (!category.treat_as_transfer || category.kind === 'investment') && !category.is_ignored
     const grouped = (groupsList ?? [])
       .map((group) => ({ id: group.id, name: group.name, categories: group.categories.filter(budgetable) }))
       .filter((group) => group.categories.length > 0)
@@ -332,6 +341,11 @@ export default function BudgetsPage() {
             </Button>
           </div>
         )}
+        {canWrite && monthPlan && !(incomePlanned !== null && incomePlanned > 0) && allCategories.length > 0 && (
+          <p className="border-b border-border px-4 sm:px-5 py-2 text-xs text-muted-foreground">
+            {t('plan.percentOfIncome')}: {t('plan.percentNeedsIncome')}
+          </p>
+        )}
         {spendingError && !noAccounts && (
           <div role="alert" className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 text-sm text-destructive">
             <span>{t('budgets.spendingError')}</span>
@@ -396,17 +410,28 @@ export default function BudgetsPage() {
                           <BudgetSpendingProgress categoryName={category.name} percentage={percentage} budgetAmount={limit} currency={userCurrency} showBudgetLabel={false} />
                         )}
                       </div>
-                      <button
-                        type="button"
-                        aria-pressed={recurring}
-                        aria-label={t('budgets.repeatEveryMonthFor', { category: category.name })}
-                        title={t('budgets.repeatEveryMonth')}
-                        disabled={!canWrite}
-                        onClick={() => toggleRecurring(category.id)}
-                        className={`col-start-2 row-start-1 md:col-start-4 p-1.5 rounded-md transition-colors disabled:opacity-60 ${recurring ? 'text-primary bg-primary/10 hover:bg-primary/15' : 'text-muted-foreground/60 hover:text-foreground hover:bg-muted'}`}
-                      >
-                        <Repeat size={13} />
-                      </button>
+                      <div className="col-start-2 row-start-1 md:col-start-4 flex items-center">
+                        {canWrite && (
+                          <IncomePercentHelper
+                            categoryName={category.name}
+                            incomePlanned={incomePlanned}
+                            locale={locale}
+                            money={fmt}
+                            onApply={(amount) => setDraft(category.id, formatAmountInput(amount, locale))}
+                          />
+                        )}
+                        <button
+                          type="button"
+                          aria-pressed={recurring}
+                          aria-label={t('budgets.repeatEveryMonthFor', { category: category.name })}
+                          title={t('budgets.repeatEveryMonth')}
+                          disabled={!canWrite}
+                          onClick={() => toggleRecurring(category.id)}
+                          className={`p-1.5 rounded-md transition-colors disabled:opacity-60 ${recurring ? 'text-primary bg-primary/10 hover:bg-primary/15' : 'text-muted-foreground/60 hover:text-foreground hover:bg-muted'}`}
+                        >
+                          <Repeat size={13} />
+                        </button>
+                      </div>
                       <div className={`col-start-3 row-start-1 md:col-start-5 flex w-24 md:w-32 min-w-0 items-center rounded-lg border bg-card px-2.5 focus-within:ring-2 focus-within:ring-primary ${invalidCategories.has(category.id) ? 'border-destructive' : changed ? 'border-primary/60' : 'border-border'}`}>
                         <span className="text-xs text-muted-foreground">{formatCurrency(0, userCurrency, locale).replace(/[\d.,\s]/g, '')}</span>
                         <input

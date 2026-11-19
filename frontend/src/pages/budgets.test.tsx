@@ -15,7 +15,7 @@ const api = vi.hoisted(() => ({
   dashboard: { spendingByCategory: vi.fn(), projectedTransactions: vi.fn() },
   transactions: { list: vi.fn() },
   admin: { accountingMode: vi.fn() },
-  budgets: { list: vi.fn(), comparison: vi.fn(), suggestions: vi.fn(), createBatch: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), copyMonth: vi.fn() },
+  budgets: { list: vi.fn(), comparison: vi.fn(), suggestions: vi.fn(), createBatch: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), copyMonth: vi.fn(), planMonth: vi.fn() },
   categories: { listIncludingHidden: vi.fn() },
   categoryGroups: { listIncludingHidden: vi.fn() },
 }))
@@ -84,6 +84,7 @@ beforeEach(() => {
   }[month] ?? []))
   api.budgets.update.mockResolvedValue(rent)
   api.budgets.create.mockResolvedValue(rent)
+  api.budgets.planMonth.mockResolvedValue({ month: '2026-10-01', income_planned: 50000, blocks: [] })
 })
 
 afterEach(() => vi.useRealTimers())
@@ -122,6 +123,37 @@ describe('Budget settings page', () => {
     })
     expect(api.budgets.update).toHaveBeenCalledWith('b-rent', { amount: 950, effective_month: '2026-10-01' })
     expect(api.budgets.delete).not.toHaveBeenCalledWith('b-food-zero')
+  })
+})
+
+
+describe('Budget settings page, % of income helper', () => {
+  it('turns a percentage of the planned income into the amount that is saved', async () => {
+    const { user } = renderWithProviders(<BudgetsPage />)
+    const helper = await screen.findByRole('button', { name: t('plan.percentOfIncomeFor', { category: 'Groceries' }) })
+    await waitFor(() => expect(helper).toBeEnabled())
+    expect(api.budgets.planMonth).toHaveBeenCalledWith('2026-10-01')
+
+    await user.click(helper)
+    await user.type(await screen.findByRole('textbox', { name: t('plan.percentInputFor', { category: 'Groceries' }) }), '10')
+    expect(screen.getByText(t('plan.percentPreview', { income: '$50,000.00', amount: '$5,000.00' }))).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: t('plan.percentApply') }))
+
+    expect(screen.getByRole('textbox', { name: t('budgets.budgetFor', { category: 'Groceries' }) })).toHaveValue('5000')
+    await user.click(screen.getByRole('button', { name: t('common.save') }))
+    await waitFor(() => {
+      expect(api.budgets.update).toHaveBeenCalledWith('b-food-zero', expect.objectContaining({ amount: 5000 }))
+    })
+  })
+
+  it('is disabled with a hint while the month has no income target', async () => {
+    api.budgets.planMonth.mockResolvedValue({ month: '2026-10-01', income_planned: null, blocks: [] })
+    renderWithProviders(<BudgetsPage />)
+
+    expect(await screen.findByText(`${t('plan.percentOfIncome')}: ${t('plan.percentNeedsIncome')}`)).toBeInTheDocument()
+    const helper = screen.getByRole('button', { name: t('plan.percentOfIncomeFor', { category: 'Groceries' }) })
+    expect(helper).toBeDisabled()
+    expect(helper).toHaveAttribute('title', t('plan.percentNeedsIncome'))
   })
 })
 

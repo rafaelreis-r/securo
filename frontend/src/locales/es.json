@@ -133,7 +133,8 @@
     "aiAgents": "Agentes IA",
     "documentation": "Documentación",
     "collapseSidebar": "Contraer barra lateral",
-    "expandSidebar": "Expandir barra lateral"
+    "expandSidebar": "Expandir barra lateral",
+    "plan": "Planificación"
   },
   "invoices": {
     "title": "Invoices",
@@ -3972,5 +3973,48 @@
       "title": "Ingresos recurrentes",
       "hint": "Lo que aportan las facturas recurrentes cada mes, y lo perdido recientemente."
     }
+  },
+  "plan": {
+    "title": "Planificación",
+    "tabMonth": "Mes",
+    "tabYear": "Año",
+    "previousMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "previousYear": "Año anterior",
+    "nextYear": "Año siguiente",
+    "blocks": {
+      "income": "Ingresos",
+      "investment": "Inversión",
+      "fixed_spending": "Gasto fijo",
+      "variable_spending": "Gasto variable"
+    },
+    "status": {
+      "none": "Sin meta",
+      "ok": "En meta",
+      "over": "Por encima de la meta",
+      "short": "Por debajo de la meta"
+    },
+    "planned": "Previsto",
+    "actual": "Real",
+    "difference": "Diferencia",
+    "shareOfIncome": "% de los ingresos",
+    "category": "Categoría",
+    "total": "Total",
+    "toggleLines": "Mostrar u ocultar las categorías de {{block}}",
+    "uncategorized": "Sin categoría",
+    "noGroup": "Sin grupo",
+    "occasionalTag": "Eventual",
+    "counterFlowHint": "Esta categoría mezcla entradas y salidas",
+    "emptyTitle": "Aún no hay nada planificado",
+    "emptyDescription": "Define metas mensuales por categoría en Presupuestos para compararlas con lo real.",
+    "emptyAction": "Ir a Presupuestos",
+    "incomePlannedNote": "Ingresos previstos del mes: {{amount}}",
+    "cellLegend": "Cada celda muestra previsto / real.",
+    "percentOfIncome": "% de los ingresos",
+    "percentOfIncomeFor": "% de los ingresos para {{category}}",
+    "percentInputFor": "Porcentaje de los ingresos previstos para {{category}}",
+    "percentNeedsIncome": "Registra primero la meta de ingresos",
+    "percentPreview": "De {{income}} de ingresos previstos: {{amount}}",
+    "percentApply": "Usar importe"
   }
 }

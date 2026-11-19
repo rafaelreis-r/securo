@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   BarChart3,
   Building2,
+  ClipboardList,
   Landmark,
   PiggyBank,
   Receipt,
@@ -44,6 +45,8 @@ export const navItems: NavItem[] = [
   { type: 'link', key: 'assets', path: '/assets', icon: Landmark, module: 'assets' },
   { type: 'separator', labelKey: 'nav.groupSetup' },
   { type: 'link', key: 'budgets', path: '/budgets', icon: PiggyBank, module: 'budgets' },
+  // The plan (metas) reads the budgets' targets, so it rides the same module.
+  { type: 'link', key: 'plan', path: '/plan', icon: ClipboardList, module: 'budgets' },
   { type: 'link', key: 'goals', path: '/goals', icon: Target, module: 'goals' },
   { type: 'link', key: 'recurring', path: '/recurring', icon: Repeat, module: 'recurring' },
   { type: 'link', key: 'categories', path: '/categories', icon: Tag, module: 'categories' },
