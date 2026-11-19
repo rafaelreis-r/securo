@@ -46,6 +46,7 @@ const category: Category = {
   color: '#00aa00',
   is_system: false,
   is_hidden: false,
+  kind: 'variable',
   treat_as_transfer: false,
   is_ignored: false,
 }

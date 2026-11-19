@@ -35,6 +35,7 @@ async def list_categories(
             "icon": c.icon,
             "color": c.color,
             "is_system": bool(c.is_system),
+            "kind": c.kind,
             "treat_as_transfer": bool(getattr(c, "treat_as_transfer", False)),
         }
         for c in cats

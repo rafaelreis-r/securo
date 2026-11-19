@@ -36,7 +36,7 @@ vi.mock('@/hooks/use-privacy-mode', () => ({
 }))
 
 function category(id: string, name: string, is_hidden = false): Category {
-  return { id, user_id: 'u', group_id: 'g', name, icon: 'circle-help', color: '#000', is_system: false, is_hidden, treat_as_transfer: false, is_ignored: false }
+  return { id, user_id: 'u', group_id: 'g', name, icon: 'circle-help', color: '#000', is_system: false, is_hidden, kind: 'variable', treat_as_transfer: false, is_ignored: false }
 }
 
 function comparisonRow(categoryId: string, actual: number): BudgetVsActual {

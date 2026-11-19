@@ -24,10 +24,11 @@ from app.services.category_defaults import (
     CATEGORY_TO_GROUP,
     DEFAULT_CATEGORIES,
     DEFAULT_GROUPS,
+    default_category_kind,
     localized_name,
     name_variants,
 )
-from app.services.category_service import get_assignable_category_ids
+from app.services.category_service import get_assignable_category_ids, set_category_kind
 from app.services.rule_engine import (
     apply_rule_actions,
     compile_rule_regex,
@@ -398,8 +399,8 @@ async def ensure_default_categories(
             color=data["color"],
             is_system=True,
             group_id=target_group.id if target_group else None,
-            treat_as_transfer=data.get("treat_as_transfer", False),
         )
+        set_category_kind(cat, default_category_kind(key))
         session.add(cat)
     await session.flush()
     return len(missing_keys)

@@ -764,6 +764,9 @@ export default function AccountDetailPage() {
             color: p.category_color ?? '',
             is_system: false,
             is_hidden: false,
+            // A projection only says whether the category is transfer-like,
+            // which is all a ledger row reads.
+            kind: p.category_treat_as_transfer ? 'transfer' : 'variable',
             treat_as_transfer: p.category_treat_as_transfer,
             is_ignored: false,
           }

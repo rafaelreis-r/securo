@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.app_clock import app_today
 from app.models.account import Account
 from app.models.budget import Budget
-from app.models.category import Category
+from app.models.category import Category, CategoryKind
 from app.models.category_group import CategoryGroup
 from app.models.goal import Goal
 from app.models.group import Group, GroupMember
@@ -401,6 +401,11 @@ async def propose_update_transaction_notes(
             "group_id": {"type": "string", "format": "uuid"},
             "icon": {"type": "string"},
             "color": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"},
+            "kind": {
+                "type": "string",
+                "enum": [k.value for k in CategoryKind],
+                "description": "Nature of the category for the plan; defaults to variable.",
+            },
             "apply": _APPLY_FIELD,
         },
         "required": ["name"],
@@ -417,6 +422,7 @@ async def propose_create_category(
     group_id: str | None = None,
     icon: str | None = None,
     color: str | None = None,
+    kind: str | None = None,
     apply: bool = False,
 ) -> dict[str, Any]:
     ws_id = await resolve_workspace_id(session, ctx)
@@ -435,6 +441,7 @@ async def propose_create_category(
             "group_id": str(parse_uuid(group_id)) if group_id else None,
             "icon": icon or "circle-help",
             "color": color or "#6B7280",
+            "kind": CategoryKind(kind or CategoryKind.VARIABLE.value).value,
         },
         "name_collision": {"id": str(existing.id), "name": existing.name} if existing else None,
         "apply_endpoint": "POST /api/categories",
@@ -452,6 +459,7 @@ async def propose_create_category(
                 group_id=parse_uuid(group_id) if group_id else None,
                 icon=preview["proposed"]["icon"],
                 color=preview["proposed"]["color"],
+                kind=CategoryKind(preview["proposed"]["kind"]),
             ),
         )
         return {**preview, "applied": True, "id": str(created.id)}

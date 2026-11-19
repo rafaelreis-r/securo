@@ -91,6 +91,8 @@ export interface UserPreferences {
   onboarding_completed?: boolean
 }
 
+export type CategoryKind = 'income' | 'investment' | 'fixed' | 'variable' | 'occasional' | 'transfer'
+
 export interface Category {
   id: string
   user_id: string
@@ -100,6 +102,8 @@ export interface Category {
   color: string
   is_system: boolean
   is_hidden: boolean
+  /** Nature of the category for the plan; the server keeps `treat_as_transfer` in step with it. */
+  kind: CategoryKind
   treat_as_transfer: boolean
   is_ignored: boolean
 }

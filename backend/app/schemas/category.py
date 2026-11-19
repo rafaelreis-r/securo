@@ -3,6 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
+from app.models.category import CategoryKind
+
 
 class CategoryBase(BaseModel):
     name: str
@@ -12,7 +14,10 @@ class CategoryBase(BaseModel):
 
 class CategoryCreate(CategoryBase):
     group_id: Optional[uuid.UUID] = None
-    treat_as_transfer: bool = False
+    # Defaults to variable. `treat_as_transfer` alone is the legacy way to say
+    # it and is translated by `category_service.resolve_kind`.
+    kind: Optional[CategoryKind] = None
+    treat_as_transfer: Optional[bool] = None
     is_ignored: bool = False
 
 
@@ -21,6 +26,7 @@ class CategoryUpdate(BaseModel):
     icon: Optional[str] = None
     color: Optional[str] = None
     group_id: Optional[uuid.UUID] = None
+    kind: Optional[CategoryKind] = None
     treat_as_transfer: Optional[bool] = None
     is_ignored: Optional[bool] = None
     is_hidden: Optional[bool] = None
@@ -32,6 +38,7 @@ class CategoryRead(CategoryBase):
     group_id: Optional[uuid.UUID] = None
     is_system: bool
     is_hidden: bool = False
+    kind: CategoryKind = CategoryKind.VARIABLE
     treat_as_transfer: bool = False
     is_ignored: bool = False
 

@@ -17,7 +17,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import type { Category, CategoryGroup, CategoryUsage } from '@/types'
+import type { Category, CategoryGroup, CategoryKind, CategoryUsage } from '@/types'
+import { CATEGORY_KINDS, isTransferLikeKind } from '@/lib/category-kind'
 import { Pencil, Trash2, Plus, ChevronDown, ChevronRight, ChevronsUpDown, Eye, EyeOff } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { PageRefreshButton } from '@/components/page-refresh-button'
@@ -54,7 +55,7 @@ export default function CategoriesPage() {
   const [editingCat, setEditingCat] = useState<Category | null>(null)
   const [formIcon, setFormIcon] = useState('circle-help')
   const [formColor, setFormColor] = useState('#6366f1')
-  const [formTreatAsTransfer, setFormTreatAsTransfer] = useState(false)
+  const [formKind, setFormKind] = useState<CategoryKind>('variable')
   const [formIgnoreTransfer, setFormIgnoreTransfer] = useState(false)
   const [groupDialogOpen, setGroupDialogOpen] = useState(false)
   const [editingGroup, setEditingGroup] = useState<CategoryGroup | null>(null)
@@ -237,7 +238,7 @@ export default function CategoriesPage() {
     setEditingCat(cat)
     setFormIcon(cat?.icon ?? 'circle-help')
     setFormColor(cat?.color ?? '#6366f1')
-    setFormTreatAsTransfer(cat?.treat_as_transfer ?? false)
+    setFormKind(cat?.kind ?? 'variable')
     setFormIgnoreTransfer(cat?.is_ignored ?? false)
     setCatDialogOpen(true)
   }
@@ -261,14 +262,12 @@ export default function CategoriesPage() {
       <div className="flex-1 min-w-0 flex items-center gap-2">
         <span className="text-sm font-medium text-foreground truncate">{cat.name}</span>
         {cat.is_hidden && renderHiddenBadge(t('categories.hiddenBadge'))}
-        {cat.treat_as_transfer && (
-          <span
-            className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border shrink-0"
-            title={t('categories.treatAsTransferDesc')}
-          >
-            {t('categories.treatAsTransferBadge')}
-          </span>
-        )}
+        <span
+          className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border shrink-0"
+          title={isTransferLikeKind(cat.kind) ? t('categories.treatAsTransferDesc') : t('categories.kind')}
+        >
+          {t(`categories.kinds.${cat.kind}`)}
+        </span>
         {cat.is_ignored && (
           <span
             className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border shrink-0"
@@ -441,7 +440,7 @@ export default function CategoriesPage() {
                 icon: formData.get('icon') as string,
                 color: formData.get('color') as string,
                 group_id: (formData.get('group_id') as string) || null,
-                treat_as_transfer: formTreatAsTransfer,
+                kind: formKind,
                 is_ignored: formIgnoreTransfer
               }
               if (editingCat) {
@@ -473,6 +472,23 @@ export default function CategoriesPage() {
                 </select>
               </div>
               <div className="space-y-2">
+                <Label htmlFor="category-kind">{t('categories.kind')}</Label>
+                <select
+                  id="category-kind"
+                  name="kind"
+                  value={formKind}
+                  onChange={(e) => setFormKind(e.target.value as CategoryKind)}
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {CATEGORY_KINDS.map((kind) => (
+                    <option key={kind} value={kind}>{t(`categories.kinds.${kind}`)}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  {isTransferLikeKind(formKind) ? t('categories.treatAsTransferDesc') : t('categories.kindDesc')}
+                </p>
+              </div>
+              <div className="space-y-2">
                 <Label>{t('groups.color')}</Label>
                 <Input name="color" type="color" value={formColor} onChange={(e) => setFormColor(e.target.value)} required className="h-9 px-2 py-1" />
               </div>
@@ -482,18 +498,6 @@ export default function CategoriesPage() {
                 <input type="hidden" name="icon" value={formIcon} />
               </div>
               <div className="pt-2 border-t border-border">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formTreatAsTransfer}
-                    onChange={(e) => setFormTreatAsTransfer(e.target.checked)}
-                    className="h-4 w-4 mt-0.5 rounded border-border shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-foreground">{t('categories.treatAsTransfer')}</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">{t('categories.treatAsTransferDesc')}</p>
-                  </div>
-                </label>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"

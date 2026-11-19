@@ -37,7 +37,12 @@ from app.plugins.provenance import (
     rule_content_hash,
 )
 from app.services.category_defaults import DEFAULT_GROUPS, name_variants
-from app.services.category_service import get_category_usage
+from app.services.category_service import (
+    category_kind,
+    get_category_usage,
+    kind_from_legacy_flag,
+    set_category_kind,
+)
 from app.services.rule_service import (
     ensure_default_categories,
     existing_rule_names,
@@ -432,7 +437,9 @@ async def apply_sync(
             else:
                 row = state.rows[CATEGORIES][item.key]
             row.name, row.icon, row.color = localized(spec.name, lang), spec.icon, spec.color
-            row.group_id, row.treat_as_transfer = group_id, spec.treat_as_transfer
+            row.group_id = group_id
+            # Manifests only say treat_as_transfer; the user's kind is kept when it agrees.
+            set_category_kind(row, kind_from_legacy_flag(category_kind(row), spec.treat_as_transfer))
             _stamp(row, source, item.key)
         await session.flush()
 
