@@ -133,7 +133,8 @@
     "aiAgents": "Agentes de IA",
     "documentation": "Documentação",
     "collapseSidebar": "Recolher barra lateral",
-    "expandSidebar": "Expandir barra lateral"
+    "expandSidebar": "Expandir barra lateral",
+    "plan": "Planeamento"
   },
   "invoices": {
     "title": "Cobranças",
@@ -3986,5 +3987,48 @@
       "title": "Receita recorrente",
       "hint": "Quanto as faturas recorrentes trazem por mês, e o que se perdeu recentemente."
     }
+  },
+  "plan": {
+    "title": "Planeamento",
+    "tabMonth": "Mês",
+    "tabYear": "Ano",
+    "previousMonth": "Mês anterior",
+    "nextMonth": "Próximo mês",
+    "previousYear": "Ano anterior",
+    "nextYear": "Próximo ano",
+    "blocks": {
+      "income": "Receita",
+      "investment": "Investimento",
+      "fixed_spending": "Gasto fixo",
+      "variable_spending": "Gasto variável"
+    },
+    "status": {
+      "none": "Sem meta",
+      "ok": "Na meta",
+      "over": "Acima da meta",
+      "short": "Abaixo da meta"
+    },
+    "planned": "Previsto",
+    "actual": "Realizado",
+    "difference": "Diferença",
+    "shareOfIncome": "% da renda",
+    "category": "Categoria",
+    "total": "Total",
+    "toggleLines": "Mostrar ou ocultar as categorias de {{block}}",
+    "uncategorized": "Sem categoria",
+    "noGroup": "Sem grupo",
+    "occasionalTag": "Eventual",
+    "counterFlowHint": "Esta categoria tem entradas e saídas misturadas",
+    "emptyTitle": "Ainda nada planeado",
+    "emptyDescription": "Defina metas mensais por categoria em Orçamentos para comparar com o realizado.",
+    "emptyAction": "Ir para Orçamentos",
+    "incomePlannedNote": "Renda prevista no mês: {{amount}}",
+    "cellLegend": "Cada célula mostra previsto / realizado.",
+    "percentOfIncome": "% da renda",
+    "percentOfIncomeFor": "% da renda para {{category}}",
+    "percentInputFor": "Percentual da renda prevista para {{category}}",
+    "percentNeedsIncome": "Registe primeiro a meta de receita",
+    "percentPreview": "De {{income}} de renda prevista: {{amount}}",
+    "percentApply": "Usar valor"
   }
 }

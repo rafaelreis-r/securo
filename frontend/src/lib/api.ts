@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { LayoutItem } from '@/lib/library'
 import { normalizeBudgetComparisonRows } from '@/lib/budget-settings-utils'
+import { normalizeMonthPlan, normalizeYearGrid } from '@/lib/plan-utils'
 import type { AxiosResponse } from 'axios'
 import { markDataChanged } from '@/lib/data-changed'
 import type { NumberFormat, DateFormat } from '@/lib/format'
@@ -63,6 +64,8 @@ import type {
   Budget,
   BudgetVsActual,
   BudgetSuggestionResponse,
+  MonthPlan,
+  YearGrid,
   Rule,
   RuleAction,
   RuleConditionNode,
@@ -1481,6 +1484,15 @@ export const budgets = {
   }, workspaceId?: string | null): Promise<Budget[]> => {
     const { data } = await api.post('/budgets/copy-month', payload, workspaceHeader(workspaceId))
     return data
+  },
+  /** The plan (metas) for one month: four blocks, previsto x realizado. `month` is `YYYY-MM-01`. */
+  planMonth: async (month: string): Promise<MonthPlan> => {
+    const { data } = await api.get('/budgets/plan/month', { params: { month } })
+    return normalizeMonthPlan(data)
+  },
+  planYear: async (year: number): Promise<YearGrid> => {
+    const { data } = await api.get('/budgets/plan/year', { params: { year } })
+    return normalizeYearGrid(data)
   },
 }
 

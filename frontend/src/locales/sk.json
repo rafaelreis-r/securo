@@ -133,7 +133,8 @@
     "aiAgents": "AI agenti",
     "documentation": "Dokumentácia",
     "collapseSidebar": "Zbaliť bočný panel",
-    "expandSidebar": "Rozbaliť bočný panel"
+    "expandSidebar": "Rozbaliť bočný panel",
+    "plan": "Plan"
   },
   "invoices": {
     "title": "Faktúry",
@@ -4158,5 +4159,48 @@
       "title": "Opakované príjmy",
       "hint": "Čo mesačne prinášajú opakované faktúry a čo sa nedávno stratilo."
     }
+  },
+  "plan": {
+    "title": "Plan",
+    "tabMonth": "Month",
+    "tabYear": "Year",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "previousYear": "Previous year",
+    "nextYear": "Next year",
+    "blocks": {
+      "income": "Income",
+      "investment": "Investment",
+      "fixed_spending": "Fixed spending",
+      "variable_spending": "Variable spending"
+    },
+    "status": {
+      "none": "No target",
+      "ok": "On target",
+      "over": "Over target",
+      "short": "Below target"
+    },
+    "planned": "Planned",
+    "actual": "Actual",
+    "difference": "Difference",
+    "shareOfIncome": "% of income",
+    "category": "Category",
+    "total": "Total",
+    "toggleLines": "Show or hide the categories of {{block}}",
+    "uncategorized": "Uncategorized",
+    "noGroup": "No group",
+    "occasionalTag": "Occasional",
+    "counterFlowHint": "This category mixes money in and money out",
+    "emptyTitle": "Nothing planned yet",
+    "emptyDescription": "Set monthly targets per category in Budgets to compare them with what happened.",
+    "emptyAction": "Go to Budgets",
+    "incomePlannedNote": "Planned income this month: {{amount}}",
+    "cellLegend": "Each cell shows planned / actual.",
+    "percentOfIncome": "% of income",
+    "percentOfIncomeFor": "% of income for {{category}}",
+    "percentInputFor": "Percentage of planned income for {{category}}",
+    "percentNeedsIncome": "Set the income target first",
+    "percentPreview": "Of {{income}} planned income: {{amount}}",
+    "percentApply": "Use amount"
   }
 }
