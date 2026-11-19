@@ -20,6 +20,7 @@ function makeCategory(overrides: Partial<Category> = {}): Category {
     color: '#3b82f6',
     is_system: true,
     is_hidden: false,
+    kind: 'variable',
     treat_as_transfer: false,
     is_ignored: false,
     ...overrides,

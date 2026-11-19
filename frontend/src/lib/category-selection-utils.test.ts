@@ -14,6 +14,7 @@ const category = (overrides: Partial<Category>): Category => ({
   color: '#6B7280',
   is_system: true,
   is_hidden: false,
+  kind: 'variable',
   treat_as_transfer: false,
   is_ignored: false,
   ...overrides,

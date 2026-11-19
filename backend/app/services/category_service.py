@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.account import Account
 from app.models.budget import Budget
-from app.models.category import Category
+from app.models.category import Category, CategoryKind
 from app.models.category_group import CategoryGroup
 from app.models.recurring_transaction import RecurringTransaction
 from app.models.rule import Rule
@@ -21,9 +21,12 @@ from app.schemas.category import CategoryCreate, CategoryUpdate
 from app.services.category_defaults import (
     CATEGORY_TO_GROUP,
     DEFAULT_CATEGORIES,
+    default_category_kind,
     localized_name,
+    name_variants,
 )
 from app.services.category_group_service import create_default_groups
+from app.services.category_kind_rules import KIND_RULES
 
 
 class CategoryVisibilityError(ValueError):
@@ -36,6 +39,83 @@ class CategoryInUseError(ValueError):
 
 class CategoryTransferError(ValueError):
     """Raised when the destination given for a deletion cannot take the references."""
+
+
+class CategoryKindConflictError(ValueError):
+    """Raised when a request sends a kind and a `treat_as_transfer` that disagree."""
+
+
+# --- Kind and treat_as_transfer -------------------------------------------
+#
+# `kind` is the source of truth; `treat_as_transfer` is kept equal to
+# `KIND_RULES[kind].transfer_like` because reports, dashboards and the card
+# statement still read it. Every path that creates a category or changes either
+# field goes through `resolve_kind` and `set_category_kind`, so the two cannot
+# drift apart.
+
+
+def kind_from_legacy_flag(current: CategoryKind, treat_as_transfer: bool) -> CategoryKind:
+    """The kind a category takes when a caller only sends `treat_as_transfer`.
+
+    Turning the flag on makes it a transfer, unless it already is transfer-like
+    (an investment stays an investment). Turning it off on a transfer-like kind
+    makes it variable spending. Otherwise the kind is already right and stays.
+    """
+    if treat_as_transfer == KIND_RULES[current].transfer_like:
+        return current
+    return CategoryKind.TRANSFER if treat_as_transfer else CategoryKind.VARIABLE
+
+
+def resolve_kind(
+    current: CategoryKind,
+    *,
+    kind: Optional[CategoryKind] = None,
+    treat_as_transfer: Optional[bool] = None,
+) -> CategoryKind:
+    """The kind a write ends with, from whatever the caller sent.
+
+    `kind` wins; a `treat_as_transfer` sent alongside it must agree with it.
+    """
+    if kind is not None:
+        if treat_as_transfer is not None and treat_as_transfer != KIND_RULES[kind].transfer_like:
+            raise CategoryKindConflictError(
+                f"treat_as_transfer={treat_as_transfer} contradicts kind={kind.value}"
+            )
+        return kind
+    if treat_as_transfer is not None:
+        return kind_from_legacy_flag(current, treat_as_transfer)
+    return current
+
+
+def category_kind_values(kind: CategoryKind) -> dict[str, object]:
+    """The `kind` and `treat_as_transfer` column values for a kind."""
+    return {"kind": kind.value, "treat_as_transfer": KIND_RULES[kind].transfer_like}
+
+
+def set_category_kind(category: Category, kind: CategoryKind) -> None:
+    """The one writer of `kind` and `treat_as_transfer` on a model."""
+    for key, value in category_kind_values(kind).items():
+        setattr(category, key, value)
+
+
+def kind_for_legacy_row(name: str, treat_as_transfer: bool) -> CategoryKind:
+    """The kind of a category saved before kinds existed (an old backup).
+
+    Same reading as migration 125, minus the income group, which a single row
+    cannot see: the Investments category is an investment, any other
+    transfer-like one a transfer, the rest variable.
+    """
+    start = (
+        CategoryKind.INVESTMENT
+        if name in name_variants(DEFAULT_CATEGORIES["investments"])
+        else CategoryKind.VARIABLE
+    )
+    return kind_from_legacy_flag(start, treat_as_transfer)
+
+
+def category_kind(category: Category) -> CategoryKind:
+    """A category's current kind; a row not flushed yet has the column default."""
+    return CategoryKind(category.kind or CategoryKind.VARIABLE.value)
 
 
 async def create_default_categories(
@@ -87,8 +167,8 @@ async def create_default_categories(
             color=data["color"],
             is_system=True,
             group_id=group.id if group else None,
-            treat_as_transfer=data.get("treat_as_transfer", False),
         )
+        set_category_kind(category, default_category_kind(key))
         session.add(category)
         categories.append(category)
     await session.commit()
@@ -155,7 +235,14 @@ async def create_category(
     user_id: uuid.UUID,
     data: CategoryCreate,
 ) -> Category:
-    category = Category(user_id=user_id, workspace_id=workspace_id, **data.model_dump())
+    fields = data.model_dump(exclude={"kind", "treat_as_transfer"})
+    category = Category(user_id=user_id, workspace_id=workspace_id, **fields)
+    set_category_kind(
+        category,
+        resolve_kind(
+            CategoryKind.VARIABLE, kind=data.kind, treat_as_transfer=data.treat_as_transfer
+        ),
+    )
     session.add(category)
     await session.commit()
     await session.refresh(category)
@@ -225,6 +312,12 @@ async def update_category(
         return None
 
     changes = data.model_dump(exclude_unset=True)
+    current_kind = category_kind(category)
+    new_kind = resolve_kind(
+        current_kind,
+        kind=changes.pop("kind", None),
+        treat_as_transfer=changes.pop("treat_as_transfer", None),
+    )
     if changes.get("is_hidden") is True and not category.is_system:
         raise CategoryVisibilityError("Only system categories can be hidden")
     if (
@@ -239,7 +332,7 @@ async def update_category(
         )
 
     if (
-        changes.get("treat_as_transfer") is True
+        KIND_RULES[new_kind].transfer_like
         and not category.treat_as_transfer
         and await _used_in_card_credit_lines(session, workspace_id, category_id)
     ):
@@ -247,6 +340,7 @@ async def update_category(
 
     for key, value in changes.items():
         setattr(category, key, value)
+    set_category_kind(category, new_kind)
 
     if deactivate_rules and changes.get("is_hidden") is True:
         await deactivate_rules_assigning_category(session, workspace_id, category_id)

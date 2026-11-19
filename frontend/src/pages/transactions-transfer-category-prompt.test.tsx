@@ -58,7 +58,7 @@ vi.mock('@/contexts/collection-filter-context', () => ({
 const oldCategory: Category = {
   id: 'category-old', user_id: 'user-1', group_id: 'group-1', name: 'Old category',
   icon: 'circle', color: '#111111', is_system: false, is_hidden: false,
-  treat_as_transfer: false, is_ignored: false,
+  kind: 'variable', treat_as_transfer: false, is_ignored: false,
 }
 const newCategory: Category = {
   ...oldCategory, id: 'category-new', name: 'New category', color: '#222222',

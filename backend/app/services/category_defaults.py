@@ -16,6 +16,8 @@ workspaces created before a rename aren't given a duplicate.
 import json
 from importlib.resources import files
 
+from app.models.category import CategoryKind
+
 # importlib.resources (rather than Path(__file__)) so the file is found in
 # every install mode (editable, wheel, or zipped) as long as it's declared
 # as package data (see [tool.setuptools.package-data] in pyproject.toml).
@@ -45,3 +47,19 @@ def name_variants(data: dict) -> set[str]:
     """Every name an existing entry may carry: each language's display
     name plus any former names listed under ``aliases``."""
     return set(data["names"].values()) | set(data.get("aliases", ()))
+
+
+def default_category_kind(key: str) -> CategoryKind:
+    """The kind a default category is seeded with: what its group or flag says.
+
+    Income group -> income; the Investments category -> investment; any other
+    transfer-like default -> transfer; everything else -> variable.
+    """
+    data = DEFAULT_CATEGORIES[key]
+    if data["group"] == "income":
+        return CategoryKind.INCOME
+    if key == "investments":
+        return CategoryKind.INVESTMENT
+    if data.get("treat_as_transfer"):
+        return CategoryKind.TRANSFER
+    return CategoryKind.VARIABLE

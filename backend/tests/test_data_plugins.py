@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.access_token_scopes import required_scope
 from app.models.account import Account
-from app.models.category import Category
+from app.models.category import Category, CategoryKind
 from app.models.category_group import CategoryGroup
 from app.models.rule import Rule
 from app.models.transaction import Transaction
@@ -25,6 +25,8 @@ from app.plugins import index, service
 from app.plugins.manifest import parse_manifest
 from app.plugins.provenance import is_untouched
 from app.plugins.sync import SyncPlanChanged
+from app.schemas.category import CategoryUpdate
+from app.services import category_service
 from app.services.category_service import create_default_categories
 from app.services.rule_engine import evaluate_conditions
 
@@ -683,3 +685,35 @@ async def test_a_default_group_created_for_a_rule_also_holds_the_plugins_categor
     garden = (await _of(session, Category, workspace_id, source_key="garden"))[0]
     housing = (await _of(session, Category, workspace_id, name="Housing"))[0]
     assert garden.group_id is not None and garden.group_id == housing.group_id
+
+
+@pytest.mark.asyncio
+async def test_a_plugin_flag_sets_the_kind_and_keeps_the_users_choice(session: AsyncSession, ids, catalog):
+    """Manifests only carry treat_as_transfer; it becomes a kind, and an update
+    with the same flag keeps the kind the user picked."""
+    workspace_id, user_id = ids
+    await create_default_categories(session, user_id, lang="en")
+    catalog.manifests[V1]["contributes"]["categories"][0]["treat_as_transfer"] = True
+    await _install(session, workspace_id, user_id)
+    pets = (await _of(session, Category, workspace_id, source_key="pets"))[0]
+    assert (pets.kind, pets.treat_as_transfer) == ("transfer", True)
+
+    await category_service.update_category(
+        session, pets.id, workspace_id, CategoryUpdate(kind=CategoryKind.INVESTMENT)
+    )
+
+    def v2(m):
+        m["version"] = "2.0.0"
+        m["contributes"]["categories"][0]["icon"] = "cat"
+    catalog.publish(V2, v2)
+    await _install(session, workspace_id, user_id, action="update")
+    pets = (await _of(session, Category, workspace_id, source_key="pets"))[0]
+    assert (pets.icon, pets.kind, pets.treat_as_transfer) == ("cat", "investment", True)
+
+    def v3(m):
+        m["version"] = "3.0.0"
+        m["contributes"]["categories"][0]["treat_as_transfer"] = False
+    catalog.publish("c" * 40, v3)
+    await _install(session, workspace_id, user_id, action="update")
+    pets = (await _of(session, Category, workspace_id, source_key="pets"))[0]
+    assert (pets.kind, pets.treat_as_transfer) == ("variable", False)

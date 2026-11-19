@@ -31,7 +31,7 @@ from app.models.asset_group import AssetGroup
 from app.models.asset_transaction import AssetTransaction
 from app.models.asset_value import AssetValue
 from app.models.budget import Budget
-from app.models.category import Category
+from app.models.category import Category, CategoryKind
 from app.models.category_group import CategoryGroup
 from app.models.collection import Collection, collection_accounts, collection_asset_groups
 from app.models.credit_card_bill import CreditCardBill
@@ -66,7 +66,7 @@ from app.models.transaction_category_line import TransactionCategoryLine
 from app.models.transaction_split import TransactionSplit
 from app.models.workspace import Workspace, WorkspaceMember, WorkspaceTaxId
 from app.providers import get_storage_provider
-from app.services import invoice_logo_service, rule_service, workspace_service
+from app.services import category_service, invoice_logo_service, rule_service, workspace_service
 from app.services.attachment_service import sanitize_filename
 from app.schemas.backup import (
     BackupConfig,
@@ -1255,6 +1255,8 @@ def _prepare_model_data(
         # filled the way migration 124 fills it. Same-currency rows never read
         # the column, so they can carry the copy harmlessly.
         data["amount_account"], data["amount_account_source"] = _legacy_account_amount(data)
+    if model is Category:
+        data.update(_restored_category_kind(row))
     if "workspace_id" in columns:
         data["workspace_id"] = target_workspace_id
     if "user_id" in columns:
@@ -1264,6 +1266,21 @@ def _prepare_model_data(
     if "connection_id" in columns:
         data["connection_id"] = None
     return data
+
+
+def _restored_category_kind(row: dict[str, Any]) -> dict[str, object]:
+    """`kind` and `treat_as_transfer` for a restored category, always in step.
+
+    A backup's kind wins over its flag; a backup from before kinds existed (or
+    with a kind this version does not know) is read from its flag and name.
+    """
+    try:
+        kind = CategoryKind(row["kind"])
+    except (KeyError, ValueError):
+        kind = category_service.kind_for_legacy_row(
+            str(row.get("name") or ""), bool(row.get("treat_as_transfer"))
+        )
+    return category_service.category_kind_values(kind)
 
 
 async def _clear_workspace_entities(

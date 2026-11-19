@@ -814,6 +814,11 @@ async def test_a_card_credit_part_keeps_its_category_out_of_transfers(
         f"/api/categories/{transport.id}", headers=auth_headers, json={"treat_as_transfer": True}
     )
     assert resp.status_code == 400
+    # Nor giving it a transfer-like kind.
+    resp = await client.patch(
+        f"/api/categories/{transport.id}", headers=auth_headers, json={"kind": "investment"}
+    )
+    assert resp.status_code == 400
     resp = await client.delete(
         f"/api/categories/{transport.id}", headers=auth_headers,
         params={"transfer_to_category_id": str(savings.id)},
