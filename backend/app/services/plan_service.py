@@ -23,6 +23,7 @@ plus variable equals the dashboard expense exactly.
 
 from __future__ import annotations
 
+import re
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass
@@ -38,6 +39,7 @@ from app.core.config import get_settings
 from app.models.budget import Budget
 from app.models.category import Category, CategoryKind
 from app.models.category_group import CategoryGroup
+from app.models.payee import Payee
 from app.models.transaction import Transaction
 from app.models.user import User
 from app.schemas.plan import (
@@ -46,7 +48,9 @@ from app.schemas.plan import (
     GridRow,
     MonthPlan,
     PlanLine,
+    SourceRow,
     YearGrid,
+    YearSources,
 )
 from app.services._query_filters import (
     counts_as_investment,
@@ -581,3 +585,102 @@ async def get_year_grid(
         rows=rows,
         committed=[_money(committed.get(month, _ZERO)) for month in months],
     )
+
+
+SOURCES_SHOWN = 12
+_SOURCE_NOISE = re.compile(r"\d+(?:[/.,-]\d+)*")
+
+
+def _source_name(payee: Optional[str], description: Optional[str]) -> str:
+    """The payee when there is one; else the description without the numbers
+    banks add (dates, installments, ids), so one source is one row."""
+    if payee:
+        return payee.strip()
+    text = _SOURCE_NOISE.sub(" ", description or "")
+    return " ".join(text.split())[:60] or (description or "").strip()
+
+
+async def get_year_sources(
+    session: AsyncSession,
+    workspace_id: uuid.UUID,
+    year: int,
+    category_id: Optional[uuid.UUID],
+) -> YearSources:
+    """One category's actual over the year, broken down by payee.
+
+    Same rows as `_load_movements` (posted, not future, reporting date,
+    category lines, primary currency), signed by the category's
+    `KIND_RULES` rule; `category_id` None is the uncategorized line (its
+    debits). The owner split offsets and other workspaces' shares that
+    `_load_movements` folds in per category are not spread over payees, so
+    with split bills the sources can sum to a bit more than the category row.
+    The largest `SOURCES_SHOWN` sources are listed; the rest fold into one.
+    """
+    start, end = date(year, 1, 1), date(year + 1, 1, 1)
+    months = [date(year, m, 1) for m in range(1, 13)]
+    rule_actual = ActualRule.DEBITS_ONLY
+    if category_id is not None:
+        cats = await _load_categories(session, workspace_id)
+        info = cats.get(category_id)
+        if info is None or KIND_RULES[info.kind].block is None:
+            return YearSources(year=year, category_id=category_id, sources=[])
+        rule_actual = KIND_RULES[info.kind].actual
+
+    accounting_mode = await get_credit_card_accounting_mode(session)
+    report_date = reporting_date_col(accounting_mode)
+    category = line_category_id()
+    result = await session.execute(
+        with_category_lines(
+            select(
+                report_date,
+                Payee.name,
+                Transaction.description,
+                Transaction.type,
+                func.sum(line_primary_or_amount()),
+            )
+            .select_from(Transaction)
+        )
+        .outerjoin(Payee, Payee.id == Transaction.payee_id)
+        .where(
+            Transaction.workspace_id == workspace_id,
+            report_date >= start,
+            report_date < end,
+            report_date <= app_today(),
+            Transaction.status == "posted",
+            Transaction.source != "opening_balance",
+            or_(counts_as_user_pnl(category), counts_as_investment(category)),
+            category.is_(None) if category_id is None else category == category_id,
+        )
+        .group_by(report_date, Payee.name, Transaction.description, Transaction.type)
+    )
+
+    sign = {
+        ActualRule.CREDITS_MINUS_DEBITS: {"credit": 1, "debit": -1},
+        ActualRule.DEBITS_MINUS_CREDITS: {"debit": 1, "credit": -1},
+        ActualRule.DEBITS_ONLY: {"debit": 1},
+    }[rule_actual]
+    by_source: dict[str, dict[date, Decimal]] = defaultdict(lambda: defaultdict(lambda: _ZERO))
+    for day, payee, description, tx_type, total in result.all():
+        factor = sign.get(tx_type)
+        if factor is None:
+            continue
+        by_source[_source_name(payee, description)][day.replace(day=1)] += factor * Decimal(
+            str(total or 0)
+        )
+
+    def row(name: Optional[str], per_month: Mapping[date, Decimal]) -> SourceRow:
+        cells = [_money(per_month.get(month, _ZERO)) for month in months]
+        return SourceRow(name=name, cells=cells, total=_money(sum(cells, _ZERO)))
+
+    rows = sorted(
+        (row(name, per_month) for name, per_month in by_source.items()),
+        key=lambda r: (-abs(r.total), r.name or ""),
+    )
+    rows = [r for r in rows if any(c != 0 for c in r.cells)]
+    if len(rows) > SOURCES_SHOWN + 1:
+        rest: dict[date, Decimal] = defaultdict(lambda: _ZERO)
+        for r in rows[SOURCES_SHOWN:]:
+            for month, cell in zip(months, r.cells):
+                rest[month] += cell
+        rows = rows[:SOURCES_SHOWN] + [row(None, rest)]
+    return YearSources(year=year, category_id=category_id, sources=rows)

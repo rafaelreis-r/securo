@@ -2,6 +2,7 @@
 
 GET /api/budgets/plan/month?month=YYYY-MM-01  -> MonthPlan
 GET /api/budgets/plan/year?year=YYYY          -> YearGrid
+GET /api/budgets/plan/year/sources?year=YYYY[&category_id=] -> YearSources
 
 Amounts are in the user's primary currency. `planned` is None when no
 budget (target) is set for the line. `actual` keeps its sign: a negative
@@ -77,3 +78,18 @@ class YearGrid(BaseModel):
     # dated after today), per month Jan..Dec, spending categories only. They
     # land in the actual of their month once posted; never part of `rows`.
     committed: list[Decimal] = []
+
+
+class SourceRow(BaseModel):
+    """Where a category's money came from or went to: one payee (or
+    description) over the year. `name` None: the rest, folded together."""
+
+    name: Optional[str] = None
+    cells: list[Decimal]  # always 12, Jan..Dec, signed like the category's actual
+    total: Decimal
+
+
+class YearSources(BaseModel):
+    year: int
+    category_id: Optional[uuid.UUID] = None  # None: the uncategorized line
+    sources: list[SourceRow]  # largest first

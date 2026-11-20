@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, within } from '@testing-library/react'
 
 import PlanPage from '@/pages/plan'
-import { normalizeMonthPlan, normalizeYearGrid } from '@/lib/plan-utils'
+import { normalizeMonthPlan, normalizeYearGrid, normalizeYearSources } from '@/lib/plan-utils'
 import { renderWithProviders, t } from '@/test/utils'
 
 const api = vi.hoisted(() => ({
-  budgets: { planMonth: vi.fn(), planYear: vi.fn() },
+  budgets: { planMonth: vi.fn(), planYear: vi.fn(), planYearSources: vi.fn() },
 }))
 
 vi.mock('@/lib/api', () => ({ budgets: api.budgets }))
@@ -78,6 +78,13 @@ beforeEach(() => {
   // Same normalization as the real client, so the page gets numbers.
   api.budgets.planMonth.mockImplementation(async () => normalizeMonthPlan(structuredClone(monthPayload) as never))
   api.budgets.planYear.mockImplementation(async () => normalizeYearGrid(structuredClone(yearPayload) as never))
+  api.budgets.planYearSources.mockImplementation(async (year: number, categoryId: string | null) => normalizeYearSources({
+    year, category_id: categoryId,
+    sources: [
+      { name: 'Landlord Inc', cells: ['22000.00', ...Array.from({ length: 11 }, () => '0.00')], total: '22000.00' },
+      { name: null, cells: Array.from({ length: 12 }, () => '10.00'), total: '120.00' },
+    ],
+  }))
 })
 
 const block = (key: string) => screen.getByRole('region', { name: t(`plan.blocks.${key}`) })
@@ -216,5 +223,25 @@ describe('Plan page, year', () => {
 
     await user.click(fixedToggle)
     expect(within(table).getByRole('rowheader', { name: 'Rent paid' })).toBeInTheDocument()
+  })
+})
+
+describe('Plan page, year by category, drill-down', () => {
+  it('opens a category on its payees only when asked', async () => {
+    const { user } = renderWithProviders(<PlanPage />, { route: '/?view=year&detail=categories' })
+    const table = await screen.findByRole('table')
+    const rent = within(table).getByRole('button', { name: 'Rent paid' })
+    expect(rent).toHaveAttribute('aria-expanded', 'false')
+    expect(api.budgets.planYearSources).not.toHaveBeenCalled()
+
+    await user.click(rent)
+    expect(rent).toHaveAttribute('aria-expanded', 'true')
+    expect(api.budgets.planYearSources).toHaveBeenCalledWith(2026, 'rent')
+    const landlord = await within(table).findByRole('row', { name: /Landlord Inc/ })
+    expect(within(landlord).getAllByRole('cell')[0]).toHaveTextContent('$22K')
+    expect(within(table).getByRole('rowheader', { name: t('plan.sources.rest') })).toBeInTheDocument()
+
+    await user.click(rent)
+    expect(within(table).queryByRole('row', { name: /Landlord Inc/ })).not.toBeInTheDocument()
   })
 })

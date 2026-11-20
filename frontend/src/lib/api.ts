@@ -1,7 +1,7 @@
 import axios from 'axios'
 import type { LayoutItem } from '@/lib/library'
 import { normalizeBudgetComparisonRows } from '@/lib/budget-settings-utils'
-import { normalizeMonthPlan, normalizeYearGrid } from '@/lib/plan-utils'
+import { normalizeMonthPlan, normalizeYearGrid, normalizeYearSources } from '@/lib/plan-utils'
 import type { AxiosResponse } from 'axios'
 import { markDataChanged } from '@/lib/data-changed'
 import type { NumberFormat, DateFormat } from '@/lib/format'
@@ -66,6 +66,7 @@ import type {
   BudgetSuggestionResponse,
   MonthPlan,
   YearGrid,
+  YearSources,
   Rule,
   RuleAction,
   RuleConditionNode,
@@ -1493,6 +1494,12 @@ export const budgets = {
   planYear: async (year: number): Promise<YearGrid> => {
     const { data } = await api.get('/budgets/plan/year', { params: { year } })
     return normalizeYearGrid(data)
+  },
+  /** A category's year by payee; `categoryId` null is the uncategorized line. */
+  planYearSources: async (year: number, categoryId: string | null): Promise<YearSources> => {
+    const params = categoryId === null ? { year } : { year, category_id: categoryId }
+    const { data } = await api.get('/budgets/plan/year/sources', { params })
+    return normalizeYearSources(data)
   },
 }
 

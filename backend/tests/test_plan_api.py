@@ -365,3 +365,55 @@ async def _first_account_id(session: AsyncSession, workspace_id: uuid.UUID) -> u
     return (await session.execute(
         select(Account.id).where(Account.workspace_id == workspace_id, Account.type == "checking")
     )).scalars().first()
+
+
+async def _sources(client: AsyncClient, headers: dict, **params) -> dict:
+    resp = await client.get("/api/budgets/plan/year/sources", params={"year": 2025, **params}, headers=headers)
+    assert resp.status_code == 200, resp.text
+    return resp.json()
+
+
+@pytest.mark.asyncio
+async def test_year_sources_break_a_category_down_by_payee(
+    client: AsyncClient, session: AsyncSession, auth_headers, plan_world, test_user, test_workspace
+):
+    from app.models.payee import Payee
+
+    c = plan_world
+    s = Seed(session, test_user.id, test_workspace.id)
+    s.account = await session.get(Account, await _first_account_id(session, test_workspace.id))
+    acme = Payee(user_id=test_user.id, workspace_id=test_workspace.id, name="ACME Corp")
+    session.add(acme)
+    await session.flush()
+    s.tx("4000", "credit", date(2025, 4, 5), c["salary"], payee_id=acme.id)
+    s.tx("100", "debit", date(2025, 4, 6), c["salary"], payee_id=acme.id)  # an income refund
+    await session.commit()
+
+    grid = (await client.get("/api/budgets/plan/year", params={"year": 2025}, headers=auth_headers)).json()
+
+    def category_total(category_id: str | None, block: str) -> D:
+        (row,) = [
+            r for r in grid["rows"]
+            if r["level"] == "category" and r["block"] == block and r["category_id"] == category_id
+        ]
+        return D(row["total"]["actual"])
+
+    salary = await _sources(client, auth_headers, category_id=str(c["salary"].id))
+    by_name = {row["name"]: row for row in salary["sources"]}
+    # The payee names its rows; without one, the description minus its numbers.
+    assert set(by_name) == {"ACME Corp", "credit"}
+    assert D(by_name["ACME Corp"]["cells"][3]) == D("3900")
+    assert [D(v) for v in by_name["credit"]["cells"][1:3]] == [D("9000"), D("10000")]
+    assert salary["sources"][0]["name"] == "credit"  # largest first
+    assert sum(D(row["total"]) for row in salary["sources"]) == category_total(str(c["salary"].id), "income")
+
+    # A split row counts its own part only, as the category row does.
+    groceries = await _sources(client, auth_headers, category_id=str(c["groceries"].id))
+    assert sum(D(row["total"]) for row in groceries["sources"]) == category_total(str(c["groceries"].id), "variable_spending")
+
+    uncategorized = await _sources(client, auth_headers)
+    assert uncategorized["category_id"] is None
+    assert sum(D(row["total"]) for row in uncategorized["sources"]) == category_total(None, "variable_spending")
+
+    transfers = await _sources(client, auth_headers, category_id=str(c["moves"].id))
+    assert transfers["sources"] == []

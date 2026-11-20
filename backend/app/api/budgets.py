@@ -23,7 +23,7 @@ from app.schemas.budget import (
     BudgetUpdate,
     BudgetVsActual,
 )
-from app.schemas.plan import MonthPlan, YearGrid
+from app.schemas.plan import MonthPlan, YearGrid, YearSources
 from app.services import budget_service, plan_service
 
 router = APIRouter(prefix="/api/budgets", tags=["budgets"])
@@ -97,6 +97,18 @@ async def year_plan(
 ):
     return await plan_service.get_year_grid(
         session, ctx.workspace.id, ctx.user_id, year or app_today().year
+    )
+
+
+@router.get("/plan/year/sources", response_model=YearSources)
+async def year_plan_sources(
+    year: Optional[int] = Query(None, ge=1900, le=9999),
+    category_id: Optional[uuid.UUID] = Query(None, description="Omit for the uncategorized line"),
+    ctx: WorkspaceContext = Depends(current_workspace),
+    session: AsyncSession = Depends(get_async_session),
+):
+    return await plan_service.get_year_sources(
+        session, ctx.workspace.id, year or app_today().year, category_id
     )
 
 

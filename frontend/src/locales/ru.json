@@ -4091,6 +4091,13 @@
       "hint": "Click a month to adjust its targets in Budgets. Result = income minus investment, fixed and variable spending. Installments: card installments already on the books still to come that month.",
       "committed": "Installments",
       "committedHint": "Card installments already on the books that will still fall in that month."
+    },
+    "sources": {
+      "toggle": "Show where {{name}} came from",
+      "loading": "Loading…",
+      "empty": "Nothing this year",
+      "rest": "Others",
+      "error": "Could not load"
     }
   }
 }

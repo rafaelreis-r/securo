@@ -1342,6 +1342,19 @@ export interface PlanGridRow {
   total: PlanGridCell
 }
 
+/** One payee (or description) of a category over the year; `name` null folds the rest. */
+export interface PlanSourceRow {
+  name: string | null
+  cells: number[]
+  total: number
+}
+
+export interface YearSources {
+  year: number
+  category_id: string | null
+  sources: PlanSourceRow[]
+}
+
 export interface YearGrid {
   year: number
   rows: PlanGridRow[]

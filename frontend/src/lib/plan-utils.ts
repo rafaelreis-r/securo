@@ -1,6 +1,6 @@
 // Relative, not aliased: this file is pulled into the node test project,
 // which compiles without the `@/*` path mapping (see tsconfig.node.json).
-import type { MonthPlan, PlanBlock, PlanBlockSummary, PlanGridCell, PlanGridRow, PlanLine, YearGrid } from '../types'
+import type { MonthPlan, PlanBlock, PlanBlockSummary, PlanGridCell, PlanGridRow, PlanLine, YearGrid, YearSources } from '../types'
 
 type Decimal = number | string
 type Raw<T, K extends keyof T> = Omit<T, K> & { [P in K]: T[P] extends number ? Decimal : Decimal | null }
@@ -44,6 +44,12 @@ export function normalizeYearGrid(raw: RawYearGrid): YearGrid {
     rows: raw.rows.map((row) => ({ ...row, cells: row.cells.map(normalizeCell), total: normalizeCell(row.total) })),
     committed: (raw.committed ?? []).map(amount),
   }
+}
+
+type RawYearSources = Omit<YearSources, 'sources'> & { sources: { name: string | null; cells: Decimal[]; total: Decimal }[] }
+
+export function normalizeYearSources(raw: RawYearSources): YearSources {
+  return { ...raw, sources: raw.sources.map((row) => ({ ...row, cells: row.cells.map(amount), total: amount(row.total) })) }
 }
 
 /**
