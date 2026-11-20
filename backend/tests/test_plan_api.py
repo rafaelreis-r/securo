@@ -324,3 +324,44 @@ async def test_plan_routes_default_to_today_and_need_auth(client: AsyncClient, a
     assert year.json()["year"] == app_today().year
 
     assert (await client.get("/api/budgets/plan/month")).status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_year_grid_lists_installments_still_to_come(
+    client: AsyncClient, session: AsyncSession, auth_headers, plan_world, test_user, test_workspace
+):
+    s = Seed(session, test_user.id, test_workspace.id)
+    s.account = (await session.get(Account, (await _first_account_id(session, test_workspace.id))))
+    c = plan_world
+    installment = {"total_installments": 3}
+    # Pending installments of a card purchase: they count in May and June.
+    s.tx("400", "debit", date(2025, 5, 10), c["groceries"], status="pending", installment_number=2, **installment)
+    s.tx("400", "debit", date(2025, 6, 10), c["groceries"], status="pending", installment_number=3, **installment)
+    s.tx("250", "debit", date(2025, 6, 12), c["rent"], status="pending", installment_number=2, total_installments=6)
+    s.tx("50", "credit", date(2025, 6, 13), c["groceries"], status="pending", installment_number=2, **installment)
+    # Not committed: already posted, not an installment, or out of spending.
+    s.tx("400", "debit", date(2025, 4, 10), c["groceries"], installment_number=1, **installment)
+    s.tx("90", "debit", date(2025, 5, 11), c["groceries"], status="pending")
+    s.tx("300", "debit", date(2025, 5, 12), c["moves"], status="pending", installment_number=1, **installment)
+    s.tx("300", "debit", date(2025, 5, 12), c["invest"], status="pending", installment_number=1, **installment)
+    await session.commit()
+
+    resp = await client.get("/api/budgets/plan/year", params={"year": 2025}, headers=auth_headers)
+    assert resp.status_code == 200, resp.text
+    committed = [D(value) for value in resp.json()["committed"]]
+    assert len(committed) == 12
+    assert committed[4] == D("400")
+    assert committed[5] == D("400") + D("250") - D("50")
+    assert committed[3] == D("0")
+    # They are still to come, so no block's actual moved.
+    rows = resp.json()["rows"]
+    (variable,) = [r for r in rows if r["level"] == "block" and r["block"] == "variable_spending"]
+    assert D(variable["cells"][4]["actual"]) == D("0")
+
+
+async def _first_account_id(session: AsyncSession, workspace_id: uuid.UUID) -> uuid.UUID:
+    from sqlalchemy import select
+
+    return (await session.execute(
+        select(Account.id).where(Account.workspace_id == workspace_id, Account.type == "checking")
+    )).scalars().first()

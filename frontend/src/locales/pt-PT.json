@@ -4043,7 +4043,9 @@
       "layout": "Formato",
       "bySummary": "Por mês",
       "byCategory": "Por categoria",
-      "hint": "Clique num mês para ajustar as metas no Orçamento. Resultado é o rendimento menos investimento, despesa fixa e despesa variável."
+      "hint": "Clique num mês para ajustar as metas no Orçamento. Resultado é o rendimento menos investimento, despesa fixa e despesa variável. Prestações são as compras a prestações já lançadas que ainda vão cair no mês.",
+      "committed": "Prestações",
+      "committedHint": "Prestações do cartão já lançadas que ainda vão cair nesse mês."
     }
   }
 }

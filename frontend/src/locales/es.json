@@ -4043,7 +4043,9 @@
       "layout": "Formato",
       "bySummary": "Por mes",
       "byCategory": "Por categoría",
-      "hint": "Haz clic en un mes para ajustar sus metas en Presupuestos. Resultado es el ingreso menos inversión, gasto fijo y gasto variable."
+      "hint": "Haz clic en un mes para ajustar sus metas en Presupuestos. Resultado es el ingreso menos inversión, gasto fijo y gasto variable. Cuotas son las compras en cuotas ya registradas que todavía caerán ese mes.",
+      "committed": "Cuotas",
+      "committedHint": "Cuotas de la tarjeta ya registradas que todavía caerán ese mes."
     }
   }
 }

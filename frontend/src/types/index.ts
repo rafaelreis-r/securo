@@ -1345,6 +1345,8 @@ export interface PlanGridRow {
 export interface YearGrid {
   year: number
   rows: PlanGridRow[]
+  /** Installments still to count, per month Jan..Dec (spending only). */
+  committed: number[]
 }
 
 export interface Asset {

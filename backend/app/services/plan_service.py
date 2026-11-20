@@ -399,6 +399,56 @@ async def _load_movements(
     ]
 
 
+async def _load_committed_installments(
+    session: AsyncSession, workspace_id: uuid.UUID, start: date, end: date
+) -> dict[date, Decimal]:
+    """Installments that will count but have not yet, per month of [start, end).
+
+    The rows `_load_movements` leaves out for being pending or dated after
+    today, narrowed to installments (`total_installments` set) in spending
+    categories, on the same reporting date. Debits minus credits.
+    """
+    accounting_mode = await get_credit_card_accounting_mode(session)
+    report_date = reporting_date_col(accounting_mode)
+    category = line_category_id()
+    spending_kinds = [
+        kind.value
+        for kind, rule in KIND_RULES.items()
+        if rule.block in (PlanBlock.FIXED_SPENDING, PlanBlock.VARIABLE_SPENDING)
+    ]
+    spending_category = or_(
+        category.is_(None),
+        category.in_(
+            select(Category.id).where(
+                Category.workspace_id == workspace_id, Category.kind.in_(spending_kinds)
+            )
+        ),
+    )
+    result = await session.execute(
+        with_category_lines(
+            select(report_date, Transaction.type, func.sum(line_primary_or_amount())).select_from(
+                Transaction
+            )
+        )
+        .where(
+            Transaction.workspace_id == workspace_id,
+            report_date >= start,
+            report_date < end,
+            or_(Transaction.status != "posted", report_date > app_today()),
+            Transaction.total_installments.is_not(None),
+            Transaction.source != "opening_balance",
+            counts_as_user_pnl(category),
+            spending_category,
+        )
+        .group_by(report_date, Transaction.type)
+    )
+    committed: dict[date, Decimal] = defaultdict(lambda: _ZERO)
+    for day, tx_type, total in result.all():
+        sign = 1 if tx_type == "debit" else -1
+        committed[day.replace(day=1)] += sign * Decimal(str(total or 0))
+    return committed
+
+
 async def _month_plans(
     session: AsyncSession,
     workspace_id: uuid.UUID,
@@ -523,4 +573,11 @@ async def get_year_grid(
             )
             rows.extend(member_rows)
 
-    return YearGrid(year=year, rows=rows)
+    committed = await _load_committed_installments(
+        session, workspace_id, months[0], _add_months(months[-1], 1)
+    )
+    return YearGrid(
+        year=year,
+        rows=rows,
+        committed=[_money(committed.get(month, _ZERO)) for month in months],
+    )

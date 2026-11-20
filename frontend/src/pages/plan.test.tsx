@@ -60,6 +60,7 @@ const gridRow = (level: string, block: string, name: string, planned: string | n
 
 const yearPayload = {
   year: 2026,
+  committed: ['0.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00', '1500.00'],
   rows: [
     gridRow('block', 'income', 'income', '50000.00', '48000.00'),
     gridRow('group', 'income', 'Earnings', '50000.00', '48000.00', { group_id: 'g-inc', group_name: 'Earnings' }),
@@ -158,21 +159,23 @@ describe('Plan page, year', () => {
     const headers = within(table).getAllByRole('columnheader').map((header) => header.textContent)
     expect(headers).toEqual([
       t('plan.summary.month'), t('plan.summary.income'), t('plan.summary.investment'),
-      t('plan.summary.fixed'), t('plan.summary.variable'), t('plan.summary.result'),
+      t('plan.summary.fixed'), t('plan.summary.variable'), t('plan.summary.committed'), t('plan.summary.result'),
     ])
     // The year has targets, so the targets show first.
     expect(screen.getByRole('button', { name: t('plan.planned') })).toHaveAttribute('aria-pressed', 'true')
 
     const march = within(table).getByRole('row', { name: /March/ })
-    expect(within(march).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['$50,000.00', '—', '$20,000.00', '—', '$30,000.00'])
+    expect(within(march).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['$50,000.00', '—', '$20,000.00', '—', '—', '$30,000.00'])
     const year = within(table).getByRole('row', { name: /2026/ })
-    expect(within(year).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['$600,000.00', '—', '$240,000.00', '—', '$360,000.00'])
+    expect(within(year).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['$600,000.00', '—', '$240,000.00', '—', '$1,500.00', '$360,000.00'])
 
     await user.click(screen.getByRole('button', { name: t('plan.actual') }))
-    expect(within(march).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['$48,000.00', '—', '$22,000.00', '—', '$26,000.00'])
-    // November has not happened yet.
+    expect(within(march).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['$48,000.00', '—', '$22,000.00', '—', '—', '$26,000.00'])
+    // November has not happened yet; December already has installments due.
     const november = within(table).getByRole('row', { name: /November/ })
-    expect(within(november).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['—', '—', '—', '—', '—'])
+    expect(within(november).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['—', '—', '—', '—', '—', '—'])
+    const december = within(table).getByRole('row', { name: /December/ })
+    expect(within(december).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['—', '—', '—', '—', '$1,500.00', '—'])
   })
 
   it('links each month to its targets in Budgets', async () => {

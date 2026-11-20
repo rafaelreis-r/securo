@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { summarizeYear, type PlanFigure, type PlanSummaryRow } from '@/lib/plan-utils'
 import type { YearGrid } from '@/types'
 
-const COLUMNS = ['income', 'investment', 'fixed', 'variable'] as const
+const COLUMNS = ['income', 'investment', 'fixed', 'variable', 'committed'] as const
 
 /** Where a month's targets are edited. */
 const budgetsMonthHref = (month: string) => `/budgets?month=${month.slice(0, 7)}`
@@ -37,8 +37,8 @@ export function PlanYearSummary({ grid, figure, money, locale, currentMonth }: {
   const cells = (row: PlanSummaryRow, future: boolean) => (
     <>
       {COLUMNS.map((column) => (
-        <td key={column} className="px-3 py-2.5 text-end text-sm tabular-nums text-foreground whitespace-nowrap">
-          {future ? '—' : amount(row[column])}
+        <td key={column} className={cn('px-3 py-2.5 text-end text-sm tabular-nums whitespace-nowrap', column === 'committed' ? 'text-muted-foreground' : 'text-foreground')}>
+          {future && column !== 'committed' ? '—' : amount(row[column])}
         </td>
       ))}
       <td className={cn('px-4 sm:px-5 py-2.5 text-end text-sm font-semibold tabular-nums whitespace-nowrap', future ? 'text-muted-foreground' : resultClass(row.result))}>
@@ -57,6 +57,7 @@ export function PlanYearSummary({ grid, figure, money, locale, currentMonth }: {
             <th scope="col" className="px-3 py-2 text-end font-medium">{t('plan.summary.investment')}</th>
             <th scope="col" className="px-3 py-2 text-end font-medium">{t('plan.summary.fixed')}</th>
             <th scope="col" className="px-3 py-2 text-end font-medium">{t('plan.summary.variable')}</th>
+            <th scope="col" className="px-3 py-2 text-end font-medium" title={t('plan.summary.committedHint')}>{t('plan.summary.committed')}</th>
             <th scope="col" className="px-4 sm:px-5 py-2 text-end font-medium">{t('plan.summary.result')}</th>
           </tr>
         </thead>

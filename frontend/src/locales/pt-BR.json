@@ -4043,7 +4043,9 @@
       "layout": "Formato",
       "bySummary": "Por mês",
       "byCategory": "Por categoria",
-      "hint": "Clique num mês para ajustar as metas dele em Orçamentos. Resultado é a renda menos investimento, gasto fixo e gasto variável."
+      "hint": "Clique num mês para ajustar as metas dele em Orçamentos. Resultado é a renda menos investimento, gasto fixo e gasto variável. Parcelas são as compras parceladas já lançadas que ainda vão cair no mês.",
+      "committed": "Parcelas",
+      "committedHint": "Parcelas do cartão já lançadas que ainda vão cair naquele mês."
     }
   }
 }

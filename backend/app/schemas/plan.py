@@ -73,3 +73,7 @@ class GridRow(BaseModel):
 class YearGrid(BaseModel):
     year: int
     rows: list[GridRow]  # block row, then its groups, each followed by its categories
+    # Installments already on the books that have not counted yet (pending, or
+    # dated after today), per month Jan..Dec, spending categories only. They
+    # land in the actual of their month once posted; never part of `rows`.
+    committed: list[Decimal] = []
