@@ -12,7 +12,7 @@ const budgetsMonthHref = (month: string) => `/budgets?month=${month.slice(0, 7)}
 
 /**
  * The advisor's year view: one line per month with income, investment, fixed
- * and variable spending and the result, the year total at the bottom.
+ * and variable spending and the result, the year total on top.
  * A month's line opens that month in Budgets, where its targets are adjusted.
  */
 export function PlanYearSummary({ grid, figure, money, locale, currentMonth }: {
@@ -61,6 +61,15 @@ export function PlanYearSummary({ grid, figure, money, locale, currentMonth }: {
           </tr>
         </thead>
         <tbody>
+          <tr className="bg-muted/50 border-b-2 border-border font-semibold">
+            <th scope="row" className="px-4 sm:px-5 py-3 text-start text-sm text-foreground">{t('plan.summary.yearTotal', { year: grid.year })}</th>
+            {COLUMNS.map((column) => (
+              <td key={column} className="px-3 py-3 text-end text-sm tabular-nums text-foreground whitespace-nowrap">{amount(total[column])}</td>
+            ))}
+            <td className={cn('px-4 sm:px-5 py-3 text-end text-sm tabular-nums whitespace-nowrap', resultClass(total.result))}>{amount(total.result)}</td>
+          </tr>
+        </tbody>
+        <tbody>
           {months.map((row) => {
             const future = figure === 'actual' && row.month.slice(0, 7) > currentMonth
             const name = monthName(row.month)
@@ -89,15 +98,6 @@ export function PlanYearSummary({ grid, figure, money, locale, currentMonth }: {
             )
           })}
         </tbody>
-        <tfoot>
-          <tr className="bg-muted/50 border-t-2 border-border font-semibold">
-            <th scope="row" className="px-4 sm:px-5 py-3 text-start text-sm text-foreground">{t('plan.summary.yearTotal', { year: grid.year })}</th>
-            {COLUMNS.map((column) => (
-              <td key={column} className="px-3 py-3 text-end text-sm tabular-nums text-foreground whitespace-nowrap">{amount(total[column])}</td>
-            ))}
-            <td className={cn('px-4 sm:px-5 py-3 text-end text-sm tabular-nums whitespace-nowrap', resultClass(total.result))}>{amount(total.result)}</td>
-          </tr>
-        </tfoot>
       </table>
     </div>
   )
