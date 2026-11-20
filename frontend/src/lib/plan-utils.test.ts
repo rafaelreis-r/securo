@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { amountFromIncomePercent, groupPlanLines, normalizeMonthPlan, planDifference, planStatus } from './plan-utils'
-import type { PlanLine } from '../types'
+import { amountFromIncomePercent, groupPlanLines, normalizeMonthPlan, planDifference, planStatus, summarizeYear } from './plan-utils'
+import type { PlanBlock, PlanLine, YearGrid } from '../types'
 
 describe('planStatus', () => {
   it('flags spending above its target and income or investment below it', () => {
@@ -57,5 +57,45 @@ describe('groupPlanLines', () => {
     expect(groups.map((group) => [group.name, group.lines.map((item) => item.name)])).toEqual([
       ['One', ['a', 'c']], ['Two', ['b']], [null, ['d']],
     ])
+  })
+})
+
+describe('summarizeYear', () => {
+  const cells = (values: [number | null, number][]) =>
+    values.map(([planned, actual], index) => ({ month: `2026-${String(index + 1).padStart(2, '0')}-01`, planned, actual }))
+  const block = (name: PlanBlock, values: [number | null, number][]) => ({
+    level: 'block' as const, block: name, group_id: null, group_name: null, category_id: null, name, kind: null,
+    cells: cells(values), total: { month: '2026-01-01', planned: null, actual: 0 },
+  })
+  const months = (first: [number | null, number], second: [number | null, number]) =>
+    [first, second, ...Array.from({ length: 10 }, (): [number | null, number] => [null, 0])]
+  const grid: YearGrid = {
+    year: 2026,
+    rows: [
+      block('income', months([30000, 31000.1], [30000, 29000])),
+      block('investment', months([3000, 2500], [null, 0])),
+      block('fixed_spending', months([20000, 21000], [20000, 20500.2])),
+      block('variable_spending', months([10000, 9000], [15000, 12000])),
+    ],
+  }
+
+  it('gives one line per month with income minus investment, fixed and variable as the result', () => {
+    const { months: rows } = summarizeYear(grid, 'actual')
+    expect(rows).toHaveLength(12)
+    expect(rows[0]).toEqual({ month: '2026-01-01', income: 31000.1, investment: 2500, fixed: 21000, variable: 9000, result: -1499.9 })
+    expect(rows[1].result).toBe(-3500.2)
+  })
+
+  it('totals each column over the year, the negative months included', () => {
+    const { total } = summarizeYear(grid, 'actual')
+    expect(total).toEqual({ month: '2026-01-01', income: 60000.1, investment: 2500, fixed: 41500.2, variable: 21000, result: -5000.1 })
+  })
+
+  it('leaves a block without target empty and a month without any target without result', () => {
+    const { months: rows, total } = summarizeYear(grid, 'planned')
+    expect(rows[0].result).toBe(-3000)
+    expect(rows[1]).toMatchObject({ investment: null, result: -5000 })
+    expect(rows[2]).toMatchObject({ income: null, investment: null, fixed: null, variable: null, result: null })
+    expect(total).toMatchObject({ income: 60000, investment: 3000, result: -8000 })
   })
 })

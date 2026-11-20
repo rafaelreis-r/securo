@@ -4029,6 +4029,21 @@
     "percentInputFor": "Porcentaje de los ingresos previstos para {{category}}",
     "percentNeedsIncome": "Registra primero la meta de ingresos",
     "percentPreview": "De {{income}} de ingresos previstos: {{amount}}",
-    "percentApply": "Usar importe"
+    "percentApply": "Usar importe",
+    "summary": {
+      "month": "Mes",
+      "income": "Ingresos",
+      "investment": "Inversión",
+      "fixed": "Fijo",
+      "variable": "Variable",
+      "result": "Resultado",
+      "yearTotal": "Año {{year}}",
+      "adjustMonth": "Ajustar las metas de {{month}}",
+      "figure": "Valores mostrados",
+      "layout": "Formato",
+      "bySummary": "Por mes",
+      "byCategory": "Por categoría",
+      "hint": "Haz clic en un mes para ajustar sus metas en Presupuestos. Resultado es el ingreso menos inversión, gasto fijo y gasto variable."
+    }
   }
 }

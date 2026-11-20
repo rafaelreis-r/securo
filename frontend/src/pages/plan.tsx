@@ -22,11 +22,40 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PageHeader } from '@/components/page-header'
 import { PlanEmptyHint, PlanMonthView, type PlanFormatters } from '@/components/plan/plan-month-view'
 import { PlanYearGrid } from '@/components/plan/plan-year-grid'
+import { PlanYearSummary } from '@/components/plan/plan-year-summary'
+import { cn } from '@/lib/utils'
+import type { PlanFigure } from '@/lib/plan-utils'
 
 const STEP_BUTTON = 'h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground transition-all text-base'
 const PICKER_BUTTON = 'inline-flex items-center justify-center gap-2 border border-border rounded-lg px-3 py-1.5 text-sm bg-card text-foreground hover:bg-muted/50 transition-all cursor-pointer'
 
 type View = 'month' | 'year'
+
+function Segmented<T extends string>({ label, value, options, onChange }: {
+  label: string
+  value: T
+  options: { value: T; label: string }[]
+  onChange: (value: T) => void
+}) {
+  return (
+    <div role="group" aria-label={label} className="inline-flex rounded-lg border border-border bg-card p-0.5">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={value === option.value}
+          onClick={() => onChange(option.value)}
+          className={cn(
+            'rounded-md px-3 py-1 text-xs font-medium transition-colors',
+            value === option.value ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 function LoadError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
   const { t } = useTranslation()
@@ -124,6 +153,11 @@ export default function PlanPage() {
   )
 
   const yearHasTargets = yearQuery.data?.rows.some((row) => row.level === 'block' && row.total.planned !== null)
+  const requestedFigure = searchParams.get('figure')
+  const figure: PlanFigure = requestedFigure === 'planned' || requestedFigure === 'actual'
+    ? requestedFigure
+    : yearHasTargets ? 'planned' : 'actual'
+  const byCategory = searchParams.get('detail') === 'categories'
 
   return (
     <div>
@@ -150,8 +184,32 @@ export default function PlanPage() {
           ) : (
             <>
               {!yearHasTargets && <PlanEmptyHint />}
-              <p className="text-xs text-muted-foreground">{t('plan.cellLegend')}</p>
-              <PlanYearGrid grid={yearQuery.data} money={compactMoney} locale={uiLocale} />
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {byCategory ? (
+                  <p className="text-xs text-muted-foreground">{t('plan.cellLegend')}</p>
+                ) : (
+                  <Segmented
+                    label={t('plan.summary.figure')}
+                    value={figure}
+                    options={[{ value: 'planned', label: t('plan.planned') }, { value: 'actual', label: t('plan.actual') }]}
+                    onChange={(value) => setParam('figure', value)}
+                  />
+                )}
+                <Segmented
+                  label={t('plan.summary.layout')}
+                  value={byCategory ? 'categories' : 'summary'}
+                  options={[{ value: 'summary', label: t('plan.summary.bySummary') }, { value: 'categories', label: t('plan.summary.byCategory') }]}
+                  onChange={(value) => setParam('detail', value)}
+                />
+              </div>
+              {byCategory ? (
+                <PlanYearGrid grid={yearQuery.data} money={compactMoney} locale={uiLocale} />
+              ) : (
+                <>
+                  <PlanYearSummary grid={yearQuery.data} figure={figure} money={formatters.money} locale={uiLocale} currentMonth={today.slice(0, 7)} />
+                  <p className="text-xs text-muted-foreground">{t('plan.summary.hint')}</p>
+                </>
+              )}
             </>
           )}
         </TabsContent>

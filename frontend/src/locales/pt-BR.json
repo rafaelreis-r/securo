@@ -4029,6 +4029,21 @@
     "percentInputFor": "Percentual da renda prevista para {{category}}",
     "percentNeedsIncome": "Cadastre a meta de receita primeiro",
     "percentPreview": "De {{income}} de renda prevista: {{amount}}",
-    "percentApply": "Usar valor"
+    "percentApply": "Usar valor",
+    "summary": {
+      "month": "Mês",
+      "income": "Renda",
+      "investment": "Investimento",
+      "fixed": "Fixo",
+      "variable": "Variável",
+      "result": "Resultado",
+      "yearTotal": "Ano de {{year}}",
+      "adjustMonth": "Ajustar as metas de {{month}}",
+      "figure": "Valores mostrados",
+      "layout": "Formato",
+      "bySummary": "Por mês",
+      "byCategory": "Por categoria",
+      "hint": "Clique num mês para ajustar as metas dele em Orçamentos. Resultado é a renda menos investimento, gasto fixo e gasto variável."
+    }
   }
 }

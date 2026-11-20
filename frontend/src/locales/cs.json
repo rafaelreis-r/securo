@@ -4217,6 +4217,21 @@
     "percentInputFor": "Percentage of planned income for {{category}}",
     "percentNeedsIncome": "Set the income target first",
     "percentPreview": "Of {{income}} planned income: {{amount}}",
-    "percentApply": "Use amount"
+    "percentApply": "Use amount",
+    "summary": {
+      "month": "Month",
+      "income": "Income",
+      "investment": "Investment",
+      "fixed": "Fixed",
+      "variable": "Variable",
+      "result": "Result",
+      "yearTotal": "Year {{year}}",
+      "adjustMonth": "Adjust the targets of {{month}}",
+      "figure": "Figure shown",
+      "layout": "Layout",
+      "bySummary": "By month",
+      "byCategory": "By category",
+      "hint": "Click a month to adjust its targets in Budgets. Result = income minus investment, fixed and variable spending."
+    }
   }
 }

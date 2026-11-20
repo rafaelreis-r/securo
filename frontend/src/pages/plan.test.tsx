@@ -148,28 +148,56 @@ describe('Plan page, month', () => {
 })
 
 describe('Plan page, year', () => {
-  it('renders twelve month columns plus total, each cell planned / actual', async () => {
+  it('summarizes the year by month: income, investment, fixed, variable and result, with the year total', async () => {
     const { user } = renderWithProviders(<PlanPage />)
     await screen.findByRole('region', { name: t('plan.blocks.income') })
     await user.click(screen.getByRole('tab', { name: t('plan.tabYear') }))
 
     const table = await screen.findByRole('table')
     expect(api.budgets.planYear).toHaveBeenCalledWith(2026)
+    const headers = within(table).getAllByRole('columnheader').map((header) => header.textContent)
+    expect(headers).toEqual([
+      t('plan.summary.month'), t('plan.summary.income'), t('plan.summary.investment'),
+      t('plan.summary.fixed'), t('plan.summary.variable'), t('plan.summary.result'),
+    ])
+    // The year has targets, so the targets show first.
+    expect(screen.getByRole('button', { name: t('plan.planned') })).toHaveAttribute('aria-pressed', 'true')
+
+    const march = within(table).getByRole('row', { name: /March/ })
+    expect(within(march).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['$50,000.00', '—', '$20,000.00', '—', '$30,000.00'])
+    const year = within(table).getByRole('row', { name: /2026/ })
+    expect(within(year).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['$600,000.00', '—', '$240,000.00', '—', '$360,000.00'])
+
+    await user.click(screen.getByRole('button', { name: t('plan.actual') }))
+    expect(within(march).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['$48,000.00', '—', '$22,000.00', '—', '$26,000.00'])
+    // November has not happened yet.
+    const november = within(table).getByRole('row', { name: /November/ })
+    expect(within(november).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['—', '—', '—', '—', '—'])
+  })
+
+  it('links each month to its targets in Budgets', async () => {
+    renderWithProviders(<PlanPage />, { route: '/?view=year' })
+    const table = await screen.findByRole('table')
+    expect(within(table).getByRole('link', { name: t('plan.summary.adjustMonth', { month: 'October' }) }))
+      .toHaveAttribute('href', '/budgets?month=2026-10')
+  })
+
+  it('still offers the grid by category, each cell planned / actual', async () => {
+    const { user } = renderWithProviders(<PlanPage />, { route: '/?view=year' })
+    await screen.findByRole('table')
+    await user.click(screen.getByRole('button', { name: t('plan.summary.byCategory') }))
+
+    const table = await screen.findByRole('table')
     const headers = within(table).getAllByRole('columnheader')
     expect(headers).toHaveLength(14)
-    expect(headers[1]).toHaveTextContent('Jan')
-    expect(headers[12]).toHaveTextContent('Dec')
-    expect(headers[13]).toHaveTextContent(t('plan.total'))
-
     const rent = within(table).getByRole('row', { name: /Rent paid/ })
     const rentCells = within(rent).getAllByRole('cell')
-    expect(rentCells).toHaveLength(13)
     expect(rentCells[0]).toHaveTextContent('$20K / $22K')
     expect(rentCells[12]).toHaveTextContent('$240K / $264K')
   })
 
-  it('collapses and expands a block row', async () => {
-    const { user } = renderWithProviders(<PlanPage />, { route: '/?view=year' })
+  it('collapses and expands a block row of the grid by category', async () => {
+    const { user } = renderWithProviders(<PlanPage />, { route: '/?view=year&detail=categories' })
     const table = await screen.findByRole('table')
     expect(within(table).getByRole('rowheader', { name: 'Rent paid' })).toBeInTheDocument()
 
