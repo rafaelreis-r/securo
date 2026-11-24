@@ -189,9 +189,11 @@ async def test_month_plan_folds_blocks(client: AsyncClient, auth_headers, plan_w
     assert D(lines["Salary"]["planned"]) == D("9500")
     assert D(plan["income_planned"]) == D("9500")
 
+    # Net: the paired application (2000) minus the unpaired redemption (500);
+    # the broker leg of the application is no redemption.
     invest = lines["Investments"]
     assert (D(invest["actual"]), D(invest["counter_flow"]), D(invest["planned"])) == (
-        D("2000"), D("500"), D("2000"),
+        D("1500"), D("500"), D("2000"),
     )
     assert D(lines["Rent"]["actual"]) == D("3000")
     assert D(lines["Groceries"]["actual"]) == D("900")  # 800 + its 100 part of the split row
@@ -361,7 +363,7 @@ async def test_year_grid_lists_installments_still_to_come(
 
 
 @pytest.mark.asyncio
-async def test_year_grid_reports_redemptions_beside_investment(
+async def test_year_grid_nets_investment_and_opens_it_into_flows(
     client: AsyncClient, session: AsyncSession, auth_headers, plan_world, test_user, test_workspace
 ):
     s = Seed(session, test_user.id, test_workspace.id)
@@ -370,14 +372,14 @@ async def test_year_grid_reports_redemptions_beside_investment(
     # A month with both: 1200 applied, 300 taken out.
     s.tx("1200", "debit", date(2025, 7, 3), c["invest"])
     s.tx("300", "credit", date(2025, 7, 20), c["invest"])
-    # Out of redemptions: ignored, excluded, a pending one and an own transfer.
+    # Out of the investment: ignored, excluded, a pending one and an own transfer.
     s.tx("70", "credit", date(2025, 7, 21), c["invest"], is_ignored=True)
     s.tx("80", "credit", date(2025, 7, 22), c["invest"], exclude_from_pnl=True)
     s.tx("90", "credit", date(2025, 7, 23), c["invest"], status="pending")
     s.tx("60", "credit", date(2025, 7, 24), c["moves"])
     # A redemption landing from another account: paired with a debit in an own
-    # transfer category there. The investment-side credit counts, the other
-    # leg does not.
+    # transfer category there. The investment-side credit is a redemption, the
+    # other leg counts nowhere.
     landed = uuid.uuid4()
     s.tx("4000", "credit", date(2025, 7, 25), c["invest"], transfer_pair_id=landed)
     from sqlalchemy import select
@@ -390,19 +392,41 @@ async def test_year_grid_reports_redemptions_beside_investment(
     resp = await client.get("/api/budgets/plan/year", params={"year": 2025}, headers=auth_headers)
     assert resp.status_code == 200, resp.text
     body = resp.json()
-    redeemed = [D(value) for value in body["redeemed"]]
-    assert len(redeemed) == 12
-    # March: the unpaired 500; the broker leg of the paired application is not one.
-    assert redeemed[2] == D("500")
-    assert redeemed[6] == D("300") + D("4000")
-    assert sum(redeemed) == D("4800")
-    # The investment block still counts what was applied only.
-    (invest,) = [r for r in body["rows"] if r["level"] == "block" and r["block"] == "investment"]
-    assert D(invest["cells"][2]["actual"]) == D("2000")
-    assert D(invest["cells"][6]["actual"]) == D("1200")
-    # And the month plan, which feeds the result, is the same with or without them.
+    assert "redeemed" not in body
+    rows = body["rows"]
+    invest_rows = [(r["level"], r["name"]) for r in rows if r["block"] == "investment"]
+    assert invest_rows == [
+        ("block", "investment"),
+        ("category", "Investments"),
+        ("flow", "applied"),
+        ("flow", "redeemed"),
+    ]
+    (block,) = [r for r in rows if r["level"] == "block" and r["block"] == "investment"]
+    (category,) = [r for r in rows if r["level"] == "category" and r["block"] == "investment"]
+    (applied,) = [r for r in rows if r.get("flow") == "applied"]
+    (redeemed,) = [r for r in rows if r.get("flow") == "redeemed"]
+    assert applied["category_id"] == redeemed["category_id"] == category["category_id"]
+    # March: the paired application 2000, the unpaired 500 taken out.
+    assert (D(applied["cells"][2]["actual"]), D(redeemed["cells"][2]["actual"])) == (D("2000"), D("-500"))
+    # July: 1200 applied, 300 + 4000 taken out; the net goes negative.
+    assert (D(applied["cells"][6]["actual"]), D(redeemed["cells"][6]["actual"])) == (D("1200"), D("-4300"))
+    for month_index in (2, 6):
+        net = D(applied["cells"][month_index]["actual"]) + D(redeemed["cells"][month_index]["actual"])
+        assert D(category["cells"][month_index]["actual"]) == net
+        assert D(block["cells"][month_index]["actual"]) == net
+    assert D(block["cells"][6]["actual"]) == D("-3100")
+    assert D(redeemed["total"]["actual"]) == D("-4800")
+
+    # The month plan feeds the result with the same net: income minus
+    # investment minus spending is the cash left.
     july = await _month(client, auth_headers, date(2025, 7, 1))
-    assert D(_block(july, "investment")["actual"]) == D("1200")
+    assert D(_block(july, "investment")["actual"]) == D("-3100")
+    (invest_line,) = _block(july, "investment")["lines"]
+    assert D(invest_line["counter_flow"]) == D("4300")
+
+    # The category's sources add up to the same net.
+    sources = await _sources(client, auth_headers, category_id=str(c["invest"].id))
+    assert sum(D(row["total"]) for row in sources["sources"]) == D(category["total"]["actual"])
 
 
 async def _first_account_id(session: AsyncSession, workspace_id: uuid.UUID) -> uuid.UUID:

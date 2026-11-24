@@ -60,13 +60,16 @@ class GridCell(BaseModel):
 
 
 class GridRow(BaseModel):
-    level: Literal["block", "group", "category"]
+    # "flow": under an investment category, what was applied or redeemed
+    # (`flow`); the two rows add up to the category's net.
+    level: Literal["block", "group", "category", "flow"]
     block: PlanBlock
     group_id: Optional[uuid.UUID] = None
     group_name: Optional[str] = None
     category_id: Optional[uuid.UUID] = None
     name: str
     kind: Optional[CategoryKind] = None
+    flow: Optional[Literal["applied", "redeemed"]] = None  # level "flow" only; redeemed is negative
     cells: list[GridCell]  # always 12, Jan..Dec
     total: GridCell  # the year; month = Jan 1st
 
@@ -78,10 +81,6 @@ class YearGrid(BaseModel):
     # dated after today), per month Jan..Dec, spending categories only. They
     # land in the actual of their month once posted; never part of `rows`.
     committed: list[Decimal] = []
-    # Credits of investment categories (money taken out), per month Jan..Dec.
-    # The investment block counts what was applied only, so redemptions stay
-    # out of `rows` and of the result; they are shown beside them.
-    redeemed: list[Decimal] = []
 
 
 class SourceRow(BaseModel):

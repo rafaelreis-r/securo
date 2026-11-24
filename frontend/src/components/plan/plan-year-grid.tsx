@@ -53,7 +53,8 @@ function SourceRows({ year, categoryId, money }: { year: number; categoryId: str
 /**
  * Block → group → category rows against twelve month columns plus the year.
  * Each cell reads "previsto / realizado"; block rows fold their groups away.
- * A category opens on its payees (closed by default).
+ * A category opens on its payees (closed by default). An investment category
+ * shows its net, with what was applied and what was redeemed under it.
  */
 export function PlanYearGrid({ grid, money, locale }: { grid: YearGrid; money: (value: number) => string; locale: string }) {
   const { t } = useTranslation()
@@ -93,6 +94,19 @@ export function PlanYearGrid({ grid, money, locale }: { grid: YearGrid; money: (
         <tbody>
           {grid.rows.map((row, index) => {
             if (row.level !== 'block' && collapsed.has(row.block)) return null
+            if (row.level === 'flow') {
+              return (
+                <tr key={`flow-${row.category_id ?? ''}-${row.flow ?? ''}-${index}`} className="border-b border-border bg-muted/5">
+                  <th scope="row" className="sticky start-0 z-10 bg-card ps-16 pe-4 py-1 text-start text-[11px] font-normal text-muted-foreground">
+                    {t(`plan.flow.${row.flow ?? 'applied'}`)}
+                  </th>
+                  {row.cells.map((cell) => (
+                    <td key={cell.month} className="px-2 py-1 text-end text-[11px] tabular-nums text-muted-foreground whitespace-nowrap">{cell.actual === 0 ? '' : money(cell.actual)}</td>
+                  ))}
+                  <td className="px-2 py-1 text-end text-[11px] tabular-nums text-muted-foreground whitespace-nowrap">{money(row.total.actual)}</td>
+                </tr>
+              )
+            }
             const overIsBad = blockOverIsBad(row.block)
             const isBlock = row.level === 'block'
             const name = label(row)

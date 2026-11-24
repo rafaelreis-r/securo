@@ -1331,13 +1331,16 @@ export interface PlanGridCell {
 }
 
 export interface PlanGridRow {
-  level: 'block' | 'group' | 'category'
+  /** `flow`: under an investment category, what was applied or redeemed; the two add up to it. */
+  level: 'block' | 'group' | 'category' | 'flow'
   block: PlanBlock
   group_id: string | null
   group_name: string | null
   category_id: string | null
   name: string
   kind: CategoryKind | null
+  /** Level `flow` only. `redeemed` is negative. */
+  flow?: 'applied' | 'redeemed' | null
   cells: PlanGridCell[]
   total: PlanGridCell
 }
@@ -1360,8 +1363,6 @@ export interface YearGrid {
   rows: PlanGridRow[]
   /** Installments still to count, per month Jan..Dec (spending only). */
   committed: number[]
-  /** Taken out of investments, per month Jan..Dec. Beside the investment block, never in it. */
-  redeemed: number[]
 }
 
 export interface Asset {

@@ -245,3 +245,30 @@ describe('Plan page, year by category, drill-down', () => {
     expect(within(table).queryByRole('row', { name: /Landlord Inc/ })).not.toBeInTheDocument()
   })
 })
+
+describe('Plan page, year by category, investment', () => {
+  it('shows the net of an investment category with what was applied and redeemed under it', async () => {
+    const investment = {
+      ...yearPayload,
+      rows: [
+        ...yearPayload.rows,
+        gridRow('block', 'investment', 'investment', null, '-300.00'),
+        gridRow('category', 'investment', 'Broker', null, '-300.00', { category_id: 'broker', kind: 'investment' }),
+        gridRow('flow', 'investment', 'applied', null, '1200.00', { category_id: 'broker', kind: 'investment', flow: 'applied' }),
+        gridRow('flow', 'investment', 'redeemed', null, '-1500.00', { category_id: 'broker', kind: 'investment', flow: 'redeemed' }),
+      ],
+    }
+    api.budgets.planYear.mockImplementation(async () => normalizeYearGrid(structuredClone(investment) as never))
+    renderWithProviders(<PlanPage />, { route: '/?view=year&detail=categories' })
+    const table = await screen.findByRole('table')
+
+    const broker = within(table).getByRole('row', { name: /Broker/ })
+    expect(within(broker).getAllByRole('cell')[0]).toHaveTextContent('-$300')
+    const applied = within(table).getByRole('row', { name: new RegExp(t('plan.flow.applied')) })
+    const redeemed = within(table).getByRole('row', { name: new RegExp(t('plan.flow.redeemed')) })
+    expect(within(applied).getAllByRole('cell')[0]).toHaveTextContent('$1.2K')
+    expect(within(redeemed).getAllByRole('cell')[0]).toHaveTextContent('-$1.5K')
+    // Flows are parts of the category, not categories: no payee toggle of their own.
+    expect(within(table).queryByRole('button', { name: t('plan.flow.applied') })).not.toBeInTheDocument()
+  })
+})

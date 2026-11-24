@@ -4043,11 +4043,13 @@
       "layout": "Formato",
       "bySummary": "Por mês",
       "byCategory": "Por categoria",
-      "hint": "Clique num mês para ajustar as metas dele em Orçamentos. Resultado é a renda menos investimento, gasto fixo e gasto variável. Parcelas são as compras parceladas já lançadas que ainda vão cair no mês.",
+      "hint": "Clique num mês para ajustar as metas dele em Orçamentos. Investimento é o líquido: aplicado menos resgatado. Resultado é a renda menos investimento líquido, gasto fixo e gasto variável, ou seja, a sobra de caixa. Parcelas são as compras parceladas já lançadas que ainda vão cair no mês.",
       "committed": "Parcelas",
-      "committedHint": "Parcelas do cartão já lançadas que ainda vão cair naquele mês.",
-      "redeemed": "Resgates",
-      "redeemedHint": "Dinheiro tirado dos investimentos no mês. Não entra no investimento nem no resultado."
+      "committedHint": "Parcelas do cartão já lançadas que ainda vão cair naquele mês."
+    },
+    "flow": {
+      "applied": "Aplicações",
+      "redeemed": "Resgates"
     },
     "sources": {
       "toggle": "Ver de onde vem {{name}}",

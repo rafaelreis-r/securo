@@ -4043,11 +4043,13 @@
       "layout": "Formato",
       "bySummary": "Por mês",
       "byCategory": "Por categoria",
-      "hint": "Clique num mês para ajustar as metas no Orçamento. Resultado é o rendimento menos investimento, despesa fixa e despesa variável. Prestações são as compras a prestações já lançadas que ainda vão cair no mês.",
+      "hint": "Clique num mês para ajustar as metas no Orçamento. Investimento é o líquido: aplicado menos resgatado. Resultado é o rendimento menos investimento líquido, despesa fixa e despesa variável, ou seja, o que sobra em caixa. Prestações são as compras a prestações já lançadas que ainda vão cair no mês.",
       "committed": "Prestações",
-      "committedHint": "Prestações do cartão já lançadas que ainda vão cair nesse mês.",
-      "redeemed": "Resgates",
-      "redeemedHint": "Dinheiro retirado dos investimentos no mês. Não entra no investimento nem no resultado."
+      "committedHint": "Prestações do cartão já lançadas que ainda vão cair nesse mês."
+    },
+    "flow": {
+      "applied": "Aplicações",
+      "redeemed": "Resgates"
     },
     "sources": {
       "toggle": "Ver de onde vem {{name}}",

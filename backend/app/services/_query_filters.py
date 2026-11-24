@@ -338,25 +338,38 @@ def _investment_category_ids():
 
 
 def counts_as_investment(category_id):
-    """SQL filter: the row (or part) is money applied to an investment.
+    """SQL filter: the row (or part) is money moved into or out of an investment.
 
     The plan's investment block, which `counts_as_user_pnl` can never feed:
     an investment category is transfer-like (`KIND_RULES`), so it is out of
     income and expense by design. Same exclusions the user controls
-    (`is_ignored` on the row or its category, `exclude_from_pnl`), but a
-    paired transfer still counts: moving money from checking to the broker
-    is exactly an application. Only its debit leg does, so the broker-side
-    credit of the same pair never shows up as a redemption. The plan counts
-    debits only (`ActualRule.DEBITS_ONLY`); unpaired credits pass so it can
-    report redemptions as counter flow.
+    (`is_ignored` on the row or its category, `exclude_from_pnl`).
+
+    A debit is an application, paired or not: moving money from checking to
+    the broker is exactly that. A credit is a redemption, unless it is the
+    broker-side leg of an application, i.e. paired with a debit that is
+    itself in an investment category. A credit paired with a leg outside the
+    investments (money landing from another own account, booked there as a
+    transfer) is a redemption. The plan nets the two
+    (`ActualRule.DEBITS_MINUS_CREDITS`).
 
     `category_id` is `line_category_id()` after `with_category_lines`.
     """
+    partner = aliased(Transaction, name="investment_pair_partner")
+    applied_from_investment = exists().where(
+        partner.transfer_pair_id == Transaction.transfer_pair_id,
+        partner.id != Transaction.id,
+        partner.category_id.in_(_investment_category_ids()),
+    )
     return and_(
         category_id.in_(_investment_category_ids()),
         Transaction.is_ignored.is_(False),
         Transaction.exclude_from_pnl.is_(False),
-        or_(Transaction.transfer_pair_id.is_(None), Transaction.type == "debit"),
+        or_(
+            Transaction.transfer_pair_id.is_(None),
+            Transaction.type == "debit",
+            ~applied_from_investment,
+        ),
     )
 
 

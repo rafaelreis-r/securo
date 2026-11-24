@@ -5,9 +5,7 @@ import { cn } from '@/lib/utils'
 import { summarizeYear, type PlanFigure, type PlanSummaryRow } from '@/lib/plan-utils'
 import type { YearGrid } from '@/types'
 
-const COLUMNS = ['income', 'investment', 'redeemed', 'fixed', 'variable', 'committed'] as const
-/** Shown beside the blocks, out of the result. */
-const ASIDE = new Set<string>(['redeemed', 'committed'])
+const COLUMNS = ['income', 'investment', 'fixed', 'variable', 'committed'] as const
 
 /** Where a month's targets are edited. */
 const budgetsMonthHref = (month: string) => `/budgets?month=${month.slice(0, 7)}`
@@ -39,7 +37,7 @@ export function PlanYearSummary({ grid, figure, money, locale, currentMonth }: {
   const cells = (row: PlanSummaryRow, future: boolean) => (
     <>
       {COLUMNS.map((column) => (
-        <td key={column} className={cn('px-3 py-2.5 text-end text-sm tabular-nums whitespace-nowrap', ASIDE.has(column) ? 'text-muted-foreground' : 'text-foreground')}>
+        <td key={column} className={cn('px-3 py-2.5 text-end text-sm tabular-nums whitespace-nowrap', column === 'committed' ? 'text-muted-foreground' : 'text-foreground')}>
           {future && column !== 'committed' ? '—' : amount(row[column])}
         </td>
       ))}
@@ -57,7 +55,6 @@ export function PlanYearSummary({ grid, figure, money, locale, currentMonth }: {
             <th scope="col" className="px-4 sm:px-5 py-2 text-start font-medium">{t('plan.summary.month')}</th>
             <th scope="col" className="px-3 py-2 text-end font-medium">{t('plan.summary.income')}</th>
             <th scope="col" className="px-3 py-2 text-end font-medium">{t('plan.summary.investment')}</th>
-            <th scope="col" className="px-3 py-2 text-end font-medium" title={t('plan.summary.redeemedHint')}>{t('plan.summary.redeemed')}</th>
             <th scope="col" className="px-3 py-2 text-end font-medium">{t('plan.summary.fixed')}</th>
             <th scope="col" className="px-3 py-2 text-end font-medium">{t('plan.summary.variable')}</th>
             <th scope="col" className="px-3 py-2 text-end font-medium" title={t('plan.summary.committedHint')}>{t('plan.summary.committed')}</th>

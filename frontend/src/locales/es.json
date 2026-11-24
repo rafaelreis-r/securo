@@ -4043,11 +4043,13 @@
       "layout": "Formato",
       "bySummary": "Por mes",
       "byCategory": "Por categoría",
-      "hint": "Haz clic en un mes para ajustar sus metas en Presupuestos. Resultado es el ingreso menos inversión, gasto fijo y gasto variable. Cuotas son las compras en cuotas ya registradas que todavía caerán ese mes.",
+      "hint": "Haz clic en un mes para ajustar sus metas en Presupuestos. La inversión es neta: aplicado menos rescatado. Resultado es el ingreso menos inversión neta, gasto fijo y gasto variable, es decir, el efectivo que sobra. Cuotas son las compras en cuotas ya registradas que aún caerán en el mes.",
       "committed": "Cuotas",
-      "committedHint": "Cuotas de la tarjeta ya registradas que todavía caerán ese mes.",
-      "redeemed": "Rescates",
-      "redeemedHint": "Dinero retirado de las inversiones en el mes. No entra en la inversión ni en el resultado."
+      "committedHint": "Cuotas de la tarjeta ya registradas que todavía caerán ese mes."
+    },
+    "flow": {
+      "applied": "Aportes",
+      "redeemed": "Rescates"
     },
     "sources": {
       "toggle": "Ver de dónde viene {{name}}",

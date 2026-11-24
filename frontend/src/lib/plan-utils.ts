@@ -10,7 +10,7 @@ type RawBlock = Omit<Raw<PlanBlockSummary, 'planned' | 'actual'>, 'lines'> & { l
 type RawMonthPlan = Omit<Raw<MonthPlan, 'income_planned'>, 'blocks'> & { blocks: RawBlock[] }
 type RawCell = Raw<PlanGridCell, 'planned' | 'actual'>
 type RawGridRow = Omit<PlanGridRow, 'cells' | 'total'> & { cells: RawCell[]; total: RawCell }
-type RawYearGrid = Omit<YearGrid, 'rows' | 'committed' | 'redeemed'> & { rows: RawGridRow[]; committed?: Decimal[]; redeemed?: Decimal[] }
+type RawYearGrid = Omit<YearGrid, 'rows' | 'committed'> & { rows: RawGridRow[]; committed?: Decimal[] }
 
 const amount = (value: Decimal) => Number(value)
 const optionalAmount = (value: Decimal | null | undefined) => (value === null || value === undefined ? null : Number(value))
@@ -43,7 +43,6 @@ export function normalizeYearGrid(raw: RawYearGrid): YearGrid {
     ...raw,
     rows: raw.rows.map((row) => ({ ...row, cells: row.cells.map(normalizeCell), total: normalizeCell(row.total) })),
     committed: (raw.committed ?? []).map(amount),
-    redeemed: (raw.redeemed ?? []).map(amount),
   }
 }
 
@@ -118,22 +117,20 @@ export interface PlanSummaryRow {
   investment: number | null
   fixed: number | null
   variable: number | null
-  /** Income minus investment, fixed and variable. Negative: the month does not close. */
+  /** Income minus net investment, fixed and variable: the cash left. Negative: the month does not close. */
   result: number | null
   /** Installments already on the books still to count that month; null when none. */
   committed: number | null
-  /** Taken out of investments that month; null when nothing was. Out of the result. */
-  redeemed: number | null
 }
 
 const cents = (value: number) => Math.round(value * 100) / 100
 const sumKnown = (values: (number | null)[]) =>
   values.some((value) => value !== null) ? cents(values.reduce<number>((total, value) => total + (value ?? 0), 0)) : null
 
-function summaryRow(month: string, income: number | null, investment: number | null, fixed: number | null, variable: number | null, committed: number | null, redeemed: number | null): PlanSummaryRow {
+function summaryRow(month: string, income: number | null, investment: number | null, fixed: number | null, variable: number | null, committed: number | null): PlanSummaryRow {
   const known = [income, investment, fixed, variable].some((value) => value !== null)
   const result = known ? cents((income ?? 0) - (investment ?? 0) - (fixed ?? 0) - (variable ?? 0)) : null
-  return { month, income, investment, fixed, variable, result, committed, redeemed }
+  return { month, income, investment, fixed, variable, result, committed }
 }
 
 /**
@@ -143,8 +140,6 @@ function summaryRow(month: string, income: number | null, investment: number | n
  * target that month; a month with no target at all has a null result.
  * `committed` (installments still to come) is the same in both figures and
  * stays out of the result: the targets already cover that spending.
- * `redeemed` (taken out of investments) is what happened, also in both
- * figures, and stays out of the result too: investment counts what was applied.
  */
 export function summarizeYear(grid: YearGrid, figure: PlanFigure): { months: PlanSummaryRow[]; total: PlanSummaryRow } {
   const blockCells = (block: PlanBlock) => grid.rows.find((row) => row.level === 'block' && row.block === block)?.cells ?? []
@@ -157,7 +152,6 @@ export function summarizeYear(grid: YearGrid, figure: PlanFigure): { months: Pla
     `${grid.year}-${String(index + 1).padStart(2, '0')}-01`,
     pick(income[index]), pick(investment[index]), pick(fixed[index]), pick(variable[index]),
     grid.committed[index] ? grid.committed[index] : null,
-    grid.redeemed?.[index] ? grid.redeemed[index] : null,
   ))
   const total: PlanSummaryRow = {
     month: `${grid.year}-01-01`,
@@ -167,7 +161,6 @@ export function summarizeYear(grid: YearGrid, figure: PlanFigure): { months: Pla
     variable: sumKnown(months.map((row) => row.variable)),
     result: sumKnown(months.map((row) => row.result)),
     committed: sumKnown(months.map((row) => row.committed)),
-    redeemed: sumKnown(months.map((row) => row.redeemed)),
   }
   return { months, total }
 }

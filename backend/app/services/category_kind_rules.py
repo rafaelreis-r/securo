@@ -29,8 +29,7 @@ class ActualRule(str, enum.Enum):
     """How a category's actual is computed from its posted movements."""
 
     CREDITS_MINUS_DEBITS = "credits_minus_debits"  # income: refunds of income lower it
-    DEBITS_MINUS_CREDITS = "debits_minus_credits"  # spending: refunds lower it
-    DEBITS_ONLY = "debits_only"  # investment: only what was applied; redemptions don't count
+    DEBITS_MINUS_CREDITS = "debits_minus_credits"  # spending: refunds lower it; investment: redemptions do
 
 
 @dataclass(frozen=True)
@@ -44,7 +43,7 @@ class KindRule:
 KIND_RULES: Mapping[CategoryKind, KindRule] = MappingProxyType(
     {
         CategoryKind.INCOME: KindRule(PlanBlock.INCOME, ActualRule.CREDITS_MINUS_DEBITS, False, False),
-        CategoryKind.INVESTMENT: KindRule(PlanBlock.INVESTMENT, ActualRule.DEBITS_ONLY, False, True),
+        CategoryKind.INVESTMENT: KindRule(PlanBlock.INVESTMENT, ActualRule.DEBITS_MINUS_CREDITS, False, True),
         CategoryKind.FIXED: KindRule(PlanBlock.FIXED_SPENDING, ActualRule.DEBITS_MINUS_CREDITS, True, False),
         CategoryKind.VARIABLE: KindRule(PlanBlock.VARIABLE_SPENDING, ActualRule.DEBITS_MINUS_CREDITS, True, False),
         CategoryKind.OCCASIONAL: KindRule(PlanBlock.VARIABLE_SPENDING, ActualRule.DEBITS_MINUS_CREDITS, True, False),

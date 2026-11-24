@@ -3,8 +3,8 @@
 Planned values are the existing Budget rows (per category, month override >
 latest recurring default). Actuals come from posted transactions, signed per
 category kind by `KIND_RULES`. The fold is pure so the hard cases (a
-category with flows both ways, investment counting only what was applied,
-transfers out of every block) are unit-tested without a database.
+category with flows both ways, investment netting applications and
+redemptions, transfers out of every block) are unit-tested without a database.
 
 Totals must reconcile with the dashboard. The dashboard's monthly expense is
 every debit that counts toward the user's P/L, so for any month:
@@ -19,6 +19,13 @@ dashboard books as income, so it stays out of the sum.)
 
 When no category mixes flows, the two counter-flow terms are zero and fixed
 plus variable equals the dashboard expense exactly.
+
+Investment sits outside that identity: its categories are transfer-like, so
+the dashboard never books them. Its actual is net, applied (debits) minus
+redeemed (credits, see `counts_as_investment`), and can be negative in a
+month that took out more than it put in. Its counter_flow is what was
+redeemed, so applied = actual + counter_flow. With a net investment, income
+minus investment minus fixed and variable spending is the month's cash left.
 """
 
 from __future__ import annotations
@@ -31,9 +38,8 @@ from datetime import date
 from decimal import Decimal
 from typing import Iterable, Mapping, Optional, Protocol, Sequence, TypeVar
 
-from sqlalchemy import exists, func, or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import aliased
 
 from app.core.app_clock import app_today
 from app.core.config import get_settings
@@ -217,10 +223,8 @@ def fold_month(
             continue
         if rule.actual is ActualRule.CREDITS_MINUS_DEBITS:
             actual, counter = c - d, d
-        elif rule.actual is ActualRule.DEBITS_MINUS_CREDITS:
+        else:  # DEBITS_MINUS_CREDITS: refunds lower spending, redemptions lower investment
             actual, counter = d - c, c
-        else:  # DEBITS_ONLY: redemptions never lower what was applied
-            actual, counter = d, c
         lines_by_block[rule.block].append(
             PlanLine(
                 category_id=cat.id,
@@ -454,58 +458,6 @@ async def _load_committed_installments(
     return committed
 
 
-async def _load_redemptions(
-    session: AsyncSession, workspace_id: uuid.UUID, start: date, end: date
-) -> dict[date, Decimal]:
-    """Money taken out of investments, per month of [start, end).
-
-    Credits in investment categories on the same base as the month's actual
-    (posted, not future, reporting date, category lines, not ignored nor
-    excluded, no opening balance). A credit that is one leg of a transfer
-    pair counts too, when the money came from outside the investments (the
-    other leg in a non-investment category, e.g. a redemption landing from
-    another account); the broker-side leg of an application, whose other leg
-    is the investment debit itself, is not a redemption.
-    """
-    accounting_mode = await get_credit_card_accounting_mode(session)
-    report_date = reporting_date_col(accounting_mode)
-    category = line_category_id()
-    investment_ids = select(Category.id).where(
-        Category.workspace_id == workspace_id,
-        Category.kind == CategoryKind.INVESTMENT.value,
-        Category.is_ignored.is_(False),
-    )
-    partner = aliased(Transaction, name="pair_partner")
-    applied_from_investment = exists().where(
-        partner.transfer_pair_id == Transaction.transfer_pair_id,
-        partner.id != Transaction.id,
-        partner.category_id.in_(investment_ids),
-    )
-    result = await session.execute(
-        with_category_lines(
-            select(report_date, func.sum(line_primary_or_amount())).select_from(Transaction)
-        )
-        .where(
-            Transaction.workspace_id == workspace_id,
-            report_date >= start,
-            report_date < end,
-            report_date <= app_today(),
-            Transaction.status == "posted",
-            Transaction.source != "opening_balance",
-            Transaction.type == "credit",
-            Transaction.is_ignored.is_(False),
-            Transaction.exclude_from_pnl.is_(False),
-            category.in_(investment_ids),
-            or_(Transaction.transfer_pair_id.is_(None), ~applied_from_investment),
-        )
-        .group_by(report_date)
-    )
-    redeemed: dict[date, Decimal] = defaultdict(lambda: _ZERO)
-    for day, total in result.all():
-        redeemed[day.replace(day=1)] += Decimal(str(total or 0))
-    return redeemed
-
-
 async def _month_plans(
     session: AsyncSession,
     workspace_id: uuid.UUID,
@@ -599,10 +551,44 @@ async def get_year_grid(
                 total=_total(year, cells),
             )
 
+        def flow_rows(line: PlanLine) -> list[GridRow]:
+            """An investment category's net, opened into what was applied and
+            what was redeemed (negative); the two add up to the category row."""
+            if block is not PlanBlock.INVESTMENT or line.category_id is None:
+                return []
+            out = []
+            for flow in ("applied", "redeemed"):
+                cells = []
+                for month in months:
+                    part = cells_by_line[line.category_id].get(month)
+                    if part is None:
+                        value = _ZERO
+                    elif flow == "applied":
+                        value = part.actual + part.counter_flow
+                    else:
+                        value = -part.counter_flow
+                    cells.append(GridCell(month=month, actual=value))
+                out.append(
+                    GridRow(
+                        level="flow",
+                        block=block,
+                        group_id=line.group_id,
+                        group_name=line.group_name,
+                        category_id=line.category_id,
+                        name=flow,
+                        kind=line.kind,
+                        flow=flow,
+                        cells=cells,
+                        total=_total(year, cells),
+                    )
+                )
+            return out
+
         seen_groups: set[uuid.UUID] = set()
         for line in ordered:
             if line.group_id is None:
                 rows.append(category_row(line))
+                rows.extend(flow_rows(line))
                 continue
             if line.group_id in seen_groups:
                 continue
@@ -628,17 +614,17 @@ async def get_year_grid(
                     total=_total(year, group_cells),
                 )
             )
-            rows.extend(member_rows)
+            for member, member_row in zip(members, member_rows):
+                rows.append(member_row)
+                rows.extend(flow_rows(member))
 
     committed = await _load_committed_installments(
         session, workspace_id, months[0], _add_months(months[-1], 1)
     )
-    redeemed = await _load_redemptions(session, workspace_id, months[0], _add_months(months[-1], 1))
     return YearGrid(
         year=year,
         rows=rows,
         committed=[_money(committed.get(month, _ZERO)) for month in months],
-        redeemed=[_money(redeemed.get(month, _ZERO)) for month in months],
     )
 
 
@@ -673,13 +659,16 @@ async def get_year_sources(
     """
     start, end = date(year, 1, 1), date(year + 1, 1, 1)
     months = [date(year, m, 1) for m in range(1, 13)]
-    rule_actual = ActualRule.DEBITS_ONLY
+    sign = {"debit": 1}  # the uncategorized line counts its debits
     if category_id is not None:
         cats = await _load_categories(session, workspace_id)
         info = cats.get(category_id)
         if info is None or KIND_RULES[info.kind].block is None:
             return YearSources(year=year, category_id=category_id, sources=[])
-        rule_actual = KIND_RULES[info.kind].actual
+        sign = {
+            ActualRule.CREDITS_MINUS_DEBITS: {"credit": 1, "debit": -1},
+            ActualRule.DEBITS_MINUS_CREDITS: {"debit": 1, "credit": -1},
+        }[KIND_RULES[info.kind].actual]
 
     accounting_mode = await get_credit_card_accounting_mode(session)
     report_date = reporting_date_col(accounting_mode)
@@ -709,11 +698,6 @@ async def get_year_sources(
         .group_by(report_date, Payee.name, Transaction.description, Transaction.type)
     )
 
-    sign = {
-        ActualRule.CREDITS_MINUS_DEBITS: {"credit": 1, "debit": -1},
-        ActualRule.DEBITS_MINUS_CREDITS: {"debit": 1, "credit": -1},
-        ActualRule.DEBITS_ONLY: {"debit": 1},
-    }[rule_actual]
     by_source: dict[str, dict[date, Decimal]] = defaultdict(lambda: defaultdict(lambda: _ZERO))
     for day, payee, description, tx_type, total in result.all():
         factor = sign.get(tx_type)
