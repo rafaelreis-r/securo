@@ -72,6 +72,7 @@ describe('summarizeYear', () => {
   const grid: YearGrid = {
     year: 2026,
     committed: [0, 0, 1200.5, 800, 0, 0, 0, 0, 0, 0, 0, 0],
+    redeemed: [0, 4000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     rows: [
       block('income', months([30000, 31000.1], [30000, 29000])),
       block('investment', months([3000, 2500], [null, 0])),
@@ -83,20 +84,22 @@ describe('summarizeYear', () => {
   it('gives one line per month with income minus investment, fixed and variable as the result', () => {
     const { months: rows } = summarizeYear(grid, 'actual')
     expect(rows).toHaveLength(12)
-    expect(rows[0]).toEqual({ month: '2026-01-01', income: 31000.1, investment: 2500, fixed: 21000, variable: 9000, result: -1499.9, committed: null })
+    expect(rows[0]).toEqual({ month: '2026-01-01', income: 31000.1, investment: 2500, fixed: 21000, variable: 9000, result: -1499.9, committed: null, redeemed: null })
     expect(rows[1].result).toBe(-3500.2)
+    // A redemption shows beside the month and leaves its result alone.
+    expect(rows[1].redeemed).toBe(4000)
   })
 
   it('totals each column over the year, the negative months included', () => {
     const { total } = summarizeYear(grid, 'actual')
-    expect(total).toEqual({ month: '2026-01-01', income: 60000.1, investment: 2500, fixed: 41500.2, variable: 21000, result: -5000.1, committed: 2000.5 })
+    expect(total).toEqual({ month: '2026-01-01', income: 60000.1, investment: 2500, fixed: 41500.2, variable: 21000, result: -5000.1, committed: 2000.5, redeemed: 4000 })
   })
 
   it('leaves a block without target empty and a month without any target without result', () => {
     const { months: rows, total } = summarizeYear(grid, 'planned')
     expect(rows[0].result).toBe(-3000)
     expect(rows[1]).toMatchObject({ investment: null, result: -5000 })
-    expect(rows[2]).toMatchObject({ income: null, investment: null, fixed: null, variable: null, result: null, committed: 1200.5 })
+    expect(rows[2]).toMatchObject({ income: null, investment: null, fixed: null, variable: null, result: null, committed: 1200.5, redeemed: null })
     expect(total).toMatchObject({ income: 60000, investment: 3000, result: -8000 })
   })
 })

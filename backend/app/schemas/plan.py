@@ -78,6 +78,10 @@ class YearGrid(BaseModel):
     # dated after today), per month Jan..Dec, spending categories only. They
     # land in the actual of their month once posted; never part of `rows`.
     committed: list[Decimal] = []
+    # Credits of investment categories (money taken out), per month Jan..Dec.
+    # The investment block counts what was applied only, so redemptions stay
+    # out of `rows` and of the result; they are shown beside them.
+    redeemed: list[Decimal] = []
 
 
 class SourceRow(BaseModel):

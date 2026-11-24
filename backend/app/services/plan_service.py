@@ -31,8 +31,9 @@ from datetime import date
 from decimal import Decimal
 from typing import Iterable, Mapping, Optional, Protocol, Sequence, TypeVar
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from app.core.app_clock import app_today
 from app.core.config import get_settings
@@ -453,6 +454,58 @@ async def _load_committed_installments(
     return committed
 
 
+async def _load_redemptions(
+    session: AsyncSession, workspace_id: uuid.UUID, start: date, end: date
+) -> dict[date, Decimal]:
+    """Money taken out of investments, per month of [start, end).
+
+    Credits in investment categories on the same base as the month's actual
+    (posted, not future, reporting date, category lines, not ignored nor
+    excluded, no opening balance). A credit that is one leg of a transfer
+    pair counts too, when the money came from outside the investments (the
+    other leg in a non-investment category, e.g. a redemption landing from
+    another account); the broker-side leg of an application, whose other leg
+    is the investment debit itself, is not a redemption.
+    """
+    accounting_mode = await get_credit_card_accounting_mode(session)
+    report_date = reporting_date_col(accounting_mode)
+    category = line_category_id()
+    investment_ids = select(Category.id).where(
+        Category.workspace_id == workspace_id,
+        Category.kind == CategoryKind.INVESTMENT.value,
+        Category.is_ignored.is_(False),
+    )
+    partner = aliased(Transaction, name="pair_partner")
+    applied_from_investment = exists().where(
+        partner.transfer_pair_id == Transaction.transfer_pair_id,
+        partner.id != Transaction.id,
+        partner.category_id.in_(investment_ids),
+    )
+    result = await session.execute(
+        with_category_lines(
+            select(report_date, func.sum(line_primary_or_amount())).select_from(Transaction)
+        )
+        .where(
+            Transaction.workspace_id == workspace_id,
+            report_date >= start,
+            report_date < end,
+            report_date <= app_today(),
+            Transaction.status == "posted",
+            Transaction.source != "opening_balance",
+            Transaction.type == "credit",
+            Transaction.is_ignored.is_(False),
+            Transaction.exclude_from_pnl.is_(False),
+            category.in_(investment_ids),
+            or_(Transaction.transfer_pair_id.is_(None), ~applied_from_investment),
+        )
+        .group_by(report_date)
+    )
+    redeemed: dict[date, Decimal] = defaultdict(lambda: _ZERO)
+    for day, total in result.all():
+        redeemed[day.replace(day=1)] += Decimal(str(total or 0))
+    return redeemed
+
+
 async def _month_plans(
     session: AsyncSession,
     workspace_id: uuid.UUID,
@@ -580,10 +633,12 @@ async def get_year_grid(
     committed = await _load_committed_installments(
         session, workspace_id, months[0], _add_months(months[-1], 1)
     )
+    redeemed = await _load_redemptions(session, workspace_id, months[0], _add_months(months[-1], 1))
     return YearGrid(
         year=year,
         rows=rows,
         committed=[_money(committed.get(month, _ZERO)) for month in months],
+        redeemed=[_money(redeemed.get(month, _ZERO)) for month in months],
     )
 
 

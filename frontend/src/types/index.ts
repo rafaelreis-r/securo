@@ -1360,6 +1360,8 @@ export interface YearGrid {
   rows: PlanGridRow[]
   /** Installments still to count, per month Jan..Dec (spending only). */
   committed: number[]
+  /** Taken out of investments, per month Jan..Dec. Beside the investment block, never in it. */
+  redeemed: number[]
 }
 
 export interface Asset {

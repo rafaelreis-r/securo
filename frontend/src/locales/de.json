@@ -4036,7 +4036,9 @@
       "byCategory": "By category",
       "hint": "Click a month to adjust its targets in Budgets. Result = income minus investment, fixed and variable spending. Installments: card installments already on the books still to come that month.",
       "committed": "Installments",
-      "committedHint": "Card installments already on the books that will still fall in that month."
+      "committedHint": "Card installments already on the books that will still fall in that month.",
+      "redeemed": "Redemptions",
+      "redeemedHint": "Money taken out of investments that month. Not part of investment or of the result."
     },
     "sources": {
       "toggle": "Show where {{name}} came from",

@@ -359,6 +359,52 @@ async def test_year_grid_lists_installments_still_to_come(
     assert D(variable["cells"][4]["actual"]) == D("0")
 
 
+
+@pytest.mark.asyncio
+async def test_year_grid_reports_redemptions_beside_investment(
+    client: AsyncClient, session: AsyncSession, auth_headers, plan_world, test_user, test_workspace
+):
+    s = Seed(session, test_user.id, test_workspace.id)
+    s.account = (await session.get(Account, (await _first_account_id(session, test_workspace.id))))
+    c = plan_world
+    # A month with both: 1200 applied, 300 taken out.
+    s.tx("1200", "debit", date(2025, 7, 3), c["invest"])
+    s.tx("300", "credit", date(2025, 7, 20), c["invest"])
+    # Out of redemptions: ignored, excluded, a pending one and an own transfer.
+    s.tx("70", "credit", date(2025, 7, 21), c["invest"], is_ignored=True)
+    s.tx("80", "credit", date(2025, 7, 22), c["invest"], exclude_from_pnl=True)
+    s.tx("90", "credit", date(2025, 7, 23), c["invest"], status="pending")
+    s.tx("60", "credit", date(2025, 7, 24), c["moves"])
+    # A redemption landing from another account: paired with a debit in an own
+    # transfer category there. The investment-side credit counts, the other
+    # leg does not.
+    landed = uuid.uuid4()
+    s.tx("4000", "credit", date(2025, 7, 25), c["invest"], transfer_pair_id=landed)
+    from sqlalchemy import select
+    other = (await session.execute(
+        select(Account).where(Account.workspace_id == test_workspace.id, Account.type == "investment")
+    )).scalars().first()
+    s.tx("4000", "debit", date(2025, 7, 25), c["moves"], account=other, transfer_pair_id=landed)
+    await session.commit()
+
+    resp = await client.get("/api/budgets/plan/year", params={"year": 2025}, headers=auth_headers)
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    redeemed = [D(value) for value in body["redeemed"]]
+    assert len(redeemed) == 12
+    # March: the unpaired 500; the broker leg of the paired application is not one.
+    assert redeemed[2] == D("500")
+    assert redeemed[6] == D("300") + D("4000")
+    assert sum(redeemed) == D("4800")
+    # The investment block still counts what was applied only.
+    (invest,) = [r for r in body["rows"] if r["level"] == "block" and r["block"] == "investment"]
+    assert D(invest["cells"][2]["actual"]) == D("2000")
+    assert D(invest["cells"][6]["actual"]) == D("1200")
+    # And the month plan, which feeds the result, is the same with or without them.
+    july = await _month(client, auth_headers, date(2025, 7, 1))
+    assert D(_block(july, "investment")["actual"]) == D("1200")
+
+
 async def _first_account_id(session: AsyncSession, workspace_id: uuid.UUID) -> uuid.UUID:
     from sqlalchemy import select
 
