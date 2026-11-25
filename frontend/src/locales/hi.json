@@ -134,7 +134,8 @@
     "documentation": "दस्तावेज़",
     "collapseSidebar": "साइडबार छोटा करें",
     "expandSidebar": "साइडबार बड़ा करें",
-    "plan": "Plan"
+    "plan": "Plan",
+    "spending": "श्रेणी के अनुसार खर्च"
   },
   "invoices": {
     "title": "इनवॉइस",
@@ -4048,5 +4049,8 @@
       "rest": "Others",
       "error": "Could not load"
     }
+  },
+  "spending": {
+    "hint": "किसी श्रेणी पर क्लिक करके उसके लेनदेन देखें; किसी लेनदेन पर क्लिक करके उसकी श्रेणी बदलें।"
   }
 }

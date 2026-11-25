@@ -134,7 +134,8 @@
     "documentation": "Документація",
     "collapseSidebar": "Згорнути бічну панель",
     "expandSidebar": "Розгорнути бічну панель",
-    "plan": "Plan"
+    "plan": "Plan",
+    "spending": "Витрати за категоріями"
   },
   "invoices": {
     "title": "Invoices",
@@ -4103,5 +4104,8 @@
       "rest": "Others",
       "error": "Could not load"
     }
+  },
+  "spending": {
+    "hint": "Натисніть на категорію, щоб побачити її операції; натисніть на операцію, щоб змінити категорію."
   }
 }

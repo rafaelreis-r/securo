@@ -134,7 +134,8 @@
     "documentation": "Dokumentáció",
     "collapseSidebar": "Oldalsáv összecsukása",
     "expandSidebar": "Oldalsáv kinyitása",
-    "plan": "Plan"
+    "plan": "Plan",
+    "spending": "Kiadások kategóriánként"
   },
   "invoices": {
     "title": "Számlázás",
@@ -4048,5 +4049,8 @@
       "rest": "Others",
       "error": "Could not load"
     }
+  },
+  "spending": {
+    "hint": "Kattintson egy kategóriára a tranzakciók megtekintéséhez; kattintson egy tranzakcióra a kategória módosításához."
   }
 }

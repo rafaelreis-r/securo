@@ -134,7 +134,8 @@
     "documentation": "Documentation",
     "collapseSidebar": "Réduire la barre latérale",
     "expandSidebar": "Développer la barre latérale",
-    "plan": "Plan"
+    "plan": "Plan",
+    "spending": "Dépenses par catégorie"
   },
   "invoices": {
     "title": "Invoices",
@@ -4058,5 +4059,8 @@
       "rest": "Others",
       "error": "Could not load"
     }
+  },
+  "spending": {
+    "hint": "Cliquez sur une catégorie pour voir ses transactions ; cliquez sur une transaction pour changer sa catégorie."
   }
 }

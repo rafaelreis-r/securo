@@ -134,7 +134,8 @@
     "documentation": "Documentação",
     "collapseSidebar": "Recolher barra lateral",
     "expandSidebar": "Expandir barra lateral",
-    "plan": "Planejamento"
+    "plan": "Planejamento",
+    "spending": "Gastos por categoria"
   },
   "invoices": {
     "title": "Cobranças",
@@ -4058,5 +4059,8 @@
       "rest": "Outros",
       "error": "Não deu para carregar"
     }
+  },
+  "spending": {
+    "hint": "Clique numa categoria para ver os lançamentos; clique num lançamento para mudar a categoria."
   }
 }

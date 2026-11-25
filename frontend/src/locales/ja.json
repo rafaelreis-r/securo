@@ -134,7 +134,8 @@
     "documentation": "ドキュメント",
     "collapseSidebar": "サイドバーを折りたたむ",
     "expandSidebar": "サイドバーを展開する",
-    "plan": "Plan"
+    "plan": "Plan",
+    "spending": "カテゴリ別の支出"
   },
   "invoices": {
     "title": "請求書",
@@ -4048,5 +4049,8 @@
       "rest": "Others",
       "error": "Could not load"
     }
+  },
+  "spending": {
+    "hint": "カテゴリをクリックすると取引が表示され、取引をクリックするとカテゴリを変更できます。"
   }
 }

@@ -134,7 +134,8 @@
     "documentation": "Documentación",
     "collapseSidebar": "Contraer barra lateral",
     "expandSidebar": "Expandir barra lateral",
-    "plan": "Planificación"
+    "plan": "Planificación",
+    "spending": "Gastos por categoría"
   },
   "invoices": {
     "title": "Invoices",
@@ -4058,5 +4059,8 @@
       "rest": "Otros",
       "error": "No se pudo cargar"
     }
+  },
+  "spending": {
+    "hint": "Haz clic en una categoría para ver sus transacciones; haz clic en una transacción para cambiar su categoría."
   }
 }

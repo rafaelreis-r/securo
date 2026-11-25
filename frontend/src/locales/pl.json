@@ -134,7 +134,8 @@
     "collapseSidebar": "Zwiń pasek boczny",
     "expandSidebar": "Rozwiń pasek boczny",
     "collections": "Kolekcje",
-    "plan": "Plan"
+    "plan": "Plan",
+    "spending": "Wydatki według kategorii"
   },
   "invoices": {
     "title": "Invoices",
@@ -4196,5 +4197,8 @@
       "rest": "Others",
       "error": "Could not load"
     }
+  },
+  "spending": {
+    "hint": "Kliknij kategorię, aby zobaczyć jej transakcje; kliknij transakcję, aby zmienić jej kategorię."
   }
 }

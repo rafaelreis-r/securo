@@ -43,10 +43,12 @@ describe('nav catalog', () => {
     expect([...new Set(covered)].sort()).toEqual([...MODULE_IDS].sort())
   })
 
-  it('gives every link a distinct module, except the plan sharing budgets', () => {
-    const covered = navItems.flatMap((i) => (i.type === 'link' && i.key !== 'plan' ? [i.module] : []))
+  it('gives every link a distinct module, except the plan and spending sharing budgets', () => {
+    const shared = ['plan', 'spending']
+    const covered = navItems.flatMap((i) => (i.type === 'link' && !shared.includes(i.key) ? [i.module] : []))
     expect(new Set(covered).size).toBe(covered.length)
     expect(navItems.find((i) => i.type === 'link' && i.key === 'plan')).toMatchObject({ module: 'budgets' })
+    expect(navItems.find((i) => i.type === 'link' && i.key === 'spending')).toMatchObject({ module: 'budgets', path: '/spending' })
   })
 })
 
@@ -61,6 +63,7 @@ describe('visibleNavItems', () => {
       'assets',
       'budgets',
       'plan',
+      'spending',
       'goals',
       'recurring',
       'categories',

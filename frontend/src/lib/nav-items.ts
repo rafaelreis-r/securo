@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   BarChart3,
+  ChartColumnBig,
   Building2,
   ClipboardList,
   Landmark,
@@ -47,6 +48,9 @@ export const navItems: NavItem[] = [
   { type: 'link', key: 'budgets', path: '/budgets', icon: PiggyBank, module: 'budgets' },
   // The plan (metas) reads the budgets' targets, so it rides the same module.
   { type: 'link', key: 'plan', path: '/plan', icon: ClipboardList, module: 'budgets' },
+  // The dashboard's spending-by-category card on a page of its own; it reads
+  // the budgets for its progress bars, so it rides the same module.
+  { type: 'link', key: 'spending', path: '/spending', icon: ChartColumnBig, module: 'budgets' },
   { type: 'link', key: 'goals', path: '/goals', icon: Target, module: 'goals' },
   { type: 'link', key: 'recurring', path: '/recurring', icon: Repeat, module: 'recurring' },
   { type: 'link', key: 'categories', path: '/categories', icon: Tag, module: 'categories' },

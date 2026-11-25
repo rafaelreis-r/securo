@@ -134,7 +134,8 @@
     "documentation": "Documentation",
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
-    "plan": "Plan"
+    "plan": "Plan",
+    "spending": "Spending by category"
   },
   "invoices": {
     "title": "Invoices",
@@ -4048,5 +4049,8 @@
       "rest": "Others",
       "error": "Could not load"
     }
+  },
+  "spending": {
+    "hint": "Click a category to see its transactions; click a transaction to change its category."
   }
 }

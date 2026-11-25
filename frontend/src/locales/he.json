@@ -134,7 +134,8 @@
     "documentation": "תיעוד",
     "collapseSidebar": "כיווץ סרגל הצד",
     "expandSidebar": "הרחבת סרגל הצד",
-    "plan": "Plan"
+    "plan": "Plan",
+    "spending": "הוצאות לפי קטגוריה"
   },
   "invoices": {
     "title": "חשבוניות",
@@ -4079,5 +4080,8 @@
       "rest": "Others",
       "error": "Could not load"
     }
+  },
+  "spending": {
+    "hint": "לחצו על קטגוריה כדי לראות את התנועות שלה; לחצו על תנועה כדי לשנות את הקטגוריה שלה."
   }
 }

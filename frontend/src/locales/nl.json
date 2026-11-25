@@ -134,7 +134,8 @@
     "documentation": "Documentatie",
     "collapseSidebar": "Zijbalk inklappen",
     "expandSidebar": "Zijbalk uitklappen",
-    "plan": "Plan"
+    "plan": "Plan",
+    "spending": "Uitgaven per categorie"
   },
   "invoices": {
     "title": "Invoices",
@@ -4050,5 +4051,8 @@
       "rest": "Others",
       "error": "Could not load"
     }
+  },
+  "spending": {
+    "hint": "Klik op een categorie om de transacties te zien; klik op een transactie om de categorie te wijzigen."
   }
 }

@@ -134,7 +134,8 @@
     "documentation": "Документация",
     "collapseSidebar": "Свернуть боковую панель",
     "expandSidebar": "Развернуть боковую панель",
-    "plan": "Plan"
+    "plan": "Plan",
+    "spending": "Расходы по категориям"
   },
   "invoices": {
     "title": "Invoices",
@@ -4103,5 +4104,8 @@
       "rest": "Others",
       "error": "Could not load"
     }
+  },
+  "spending": {
+    "hint": "Нажмите на категорию, чтобы увидеть её операции; нажмите на операцию, чтобы изменить категорию."
   }
 }

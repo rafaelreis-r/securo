@@ -134,7 +134,8 @@
     "documentation": "Dokumentation",
     "collapseSidebar": "Seitenleiste einklappen",
     "expandSidebar": "Seitenleiste ausklappen",
-    "plan": "Plan"
+    "plan": "Plan",
+    "spending": "Ausgaben nach Kategorie"
   },
   "invoices": {
     "title": "Invoices",
@@ -4049,5 +4050,8 @@
       "rest": "Others",
       "error": "Could not load"
     }
+  },
+  "spending": {
+    "hint": "Klicken Sie auf eine Kategorie, um ihre Buchungen zu sehen; klicken Sie auf eine Buchung, um ihre Kategorie zu ändern."
   }
 }

@@ -134,7 +134,8 @@
     "documentation": "Dokumentace",
     "collapseSidebar": "Sbalit boční panel",
     "expandSidebar": "Rozbalit boční panel",
-    "plan": "Plan"
+    "plan": "Plan",
+    "spending": "Výdaje podle kategorií"
   },
   "invoices": {
     "title": "Faktury",
@@ -4246,5 +4247,8 @@
       "rest": "Others",
       "error": "Could not load"
     }
+  },
+  "spending": {
+    "hint": "Klikněte na kategorii pro zobrazení transakcí; klikněte na transakci pro změnu kategorie."
   }
 }
